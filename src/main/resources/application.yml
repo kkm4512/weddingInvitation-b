@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: weddingInvitation-b
+
+  # 기본 프로필: local (.env의 SPRING_PROFILES_ACTIVE로 오버라이드 가능)
+  profiles:
+    active: local
+
+  # JPA 공통 설정 (dialect는 Hibernate 7.x 자동 감지)
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+# Kakao OAuth2
+kakao:
+  client:
+    id: ${KAKAO_CLIENT_ID}
+    secret: ${KAKAO_CLIENT_SECRET}
+  redirect:
+    uri: ${KAKAO_REDIRECT_URI}
+
+# Cloudflare R2
+cloudflare:
+  account:
+    id: ${CLOUDFLARE_ACCOUNT_ID}
+  access:
+    key:
+      id: ${CLOUDFLARE_ACCESS_KEY_ID}
+  secret:
+    access:
+      key: ${CLOUDFLARE_SECRET_ACCESS_KEY}
+  bucket:
+    name: ${CLOUDFLARE_BUCKET_NAME}
+    url: ${CLOUDFLARE_BUCKET_URL}
+
+# Logging 공통
+logging:
+  level:
+    root: INFO
+    com.example.weddingInvitation_b: DEBUG

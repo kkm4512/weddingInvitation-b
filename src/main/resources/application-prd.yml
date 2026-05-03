@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate  # 운영은 스키마 변경 금지
+    show-sql: false        # 운영은 SQL 로그 비활성화
+
+logging:
+  level:
+    root: WARN
+    com.example.weddingInvitation_b: INFO
