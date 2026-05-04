@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 /**
  * 신랑/신부 정보 엔티티
  * 
@@ -70,5 +72,23 @@ public class McardCouple {
     /** 신부측 연락처 표시 여부 */
     @Builder.Default
     private Boolean showBrideContacts = true;
-}
 
+    /** 생성 일시 */
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    /** 수정 일시 */
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    private void onPrePersist() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    private void onPreUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+}

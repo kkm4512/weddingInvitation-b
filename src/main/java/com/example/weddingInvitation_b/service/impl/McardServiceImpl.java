@@ -114,14 +114,21 @@ public class McardServiceImpl implements McardService {
      * 
      * @param mcardId 업데이트할 청첩장 ID
      * @param requestDto 업데이트 정보
+     * @param userId 요청한 사용자 ID
      * @return 업데이트된 청첩장 정보
      * @throws EntityNotFoundException 청첩장이 존재하지 않을 경우
+     * @throws AccessDeniedException 청첩장 소유자가 아닐 경우
      */
     @Override
     @Transactional
-    public McardResponseDto updateMcard(Long mcardId, McardCreateRequestDto requestDto) {
+    public McardResponseDto updateMcard(Long mcardId, McardCreateRequestDto requestDto, Long userId) {
         Mcard mcard = mcardRepository.findById(mcardId)
             .orElseThrow(() -> new EntityNotFoundException("청첩장을 찾을 수 없습니다. mcardId=" + mcardId));
+
+        // 권한 검증: 청첩장 소유자만 수정 가능
+        if (!mcard.getUser().getUserId().equals(userId)) {
+            throw new AccessDeniedException("청첩장을 수정할 권한이 없습니다.");
+        }
 
         // 제목 업데이트 (필요시 다른 필드도 추가 가능)
         mcard = Mcard.builder()
@@ -144,13 +151,20 @@ public class McardServiceImpl implements McardService {
      * 청첩장 삭제 (soft delete)
      * 
      * @param mcardId 삭제할 청첩장 ID
+     * @param userId 요청한 사용자 ID
      * @throws EntityNotFoundException 청첩장이 존재하지 않을 경우
+     * @throws AccessDeniedException 청첩장 소유자가 아닐 경우
      */
     @Override
     @Transactional
-    public void deleteMcard(Long mcardId) {
+    public void deleteMcard(Long mcardId, Long userId) {
         Mcard mcard = mcardRepository.findById(mcardId)
             .orElseThrow(() -> new EntityNotFoundException("청첩장을 찾을 수 없습니다. mcardId=" + mcardId));
+
+        // 권한 검증: 청첩장 소유자만 삭제 가능
+        if (!mcard.getUser().getUserId().equals(userId)) {
+            throw new AccessDeniedException("청첩장을 삭제할 권한이 없습니다.");
+        }
 
         // soft delete - isDeleted 플래그 설정
         mcard = Mcard.builder()
@@ -168,4 +182,3 @@ public class McardServiceImpl implements McardService {
         mcardRepository.save(mcard);
     }
 }
-

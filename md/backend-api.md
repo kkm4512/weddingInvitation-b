@@ -12,8 +12,8 @@
 |--------|-----------|------|
 | GET | `/auth/kakao` | 카카오 OAuth 로그인 시작 |
 | GET | `/auth/kakao/callback` | 카카오 OAuth 콜백 처리 및 JWT 발급 ({ userId, accessToken } JSON 반환) |
-| POST | `/auth/logout` | 로그아웃 (클라이언트 토큰 삭제 안내) |
 | GET | `/auth/me` | 현재 로그인 사용자 정보 조회 |
+| GET | `/auth/test-login/{userId}` | **[개발 전용]** userId로 바로 JWT 발급 (카카오 없이 테스트용) |
 
 ---
 
@@ -42,8 +42,9 @@
 
 | 메서드 | 엔드포인트 | 설명 |
 |--------|-----------|------|
-| GET | `/themes` | 사용 가능한 테마 목록 조회 |
-| GET | `/themes/{themeId}` | 테마 상세 조회 (색상/폰트 옵션 포함) |
+| GET | `/themes` | 사용 가능한 테마 목록 조회 (인증 불필요) |
+| GET | `/themes/{themeId}` | 테마 상세 조회 (색상/폰트 옵션 포함, 인증 불필요) |
+| GET | `/mcards/{mcardId}/theme` | 청첩장 테마 설정 조회 |
 | PUT | `/mcards/{mcardId}/theme` | 청첩장 테마 설정 저장 |
 
 ---
@@ -52,7 +53,8 @@
 
 | 메서드 | 엔드포인트 | 설명 |
 |--------|-----------|------|
-| GET | `/intros` | 인트로 레이아웃 스타일 목록 조회 |
+| GET | `/intros` | 인트로 레이아웃 스타일 목록 조회 (인증 불필요) |
+| GET | `/mcards/{mcardId}/intro` | 청첩장 인트로 스타일 조회 |
 | PUT | `/mcards/{mcardId}/intro` | 청첩장 인트로 스타일 저장 |
 
 ---
@@ -220,7 +222,9 @@
 |--------|-----------|------|
 | GET | `/mcards/{mcardId}/thumbnail` | 공유 썸네일 설정 조회 |
 | PUT | `/mcards/{mcardId}/thumbnail` | 공유 썸네일 설정 저장 |
-| POST | `/mcards/{mcardId}/thumbnail/upload` | 썸네일 이미지 업로드 |
+| POST | `/mcards/{mcardId}/thumbnail/upload?type={type}` | 썸네일 이미지 업로드 |
+
+> - `type` 파라미터: `kakao` (카카오톡 공유용) 또는 `url` (URL 공유용, 기본값)
 
 ---
 
@@ -245,23 +249,16 @@
 
 | 메서드 | 엔드포인트 | 설명 |
 |--------|-----------|------|
-| POST | `/files/upload` | 이미지/파일 업로드 (S3 저장 후 URL 반환) |
-| DELETE | `/files` | 업로드 파일 삭제 |
+| POST | `/files/upload?folder={folder}` | 이미지/파일 업로드 (multipart/form-data, Cloudflare R2 저장 후 URL 반환) |
+| DELETE | `/files?fileUrl={fileUrl}` | 업로드 파일 삭제 |
+
+> - `folder` 파라미터: 저장 경로 구분용 (예: `gallery`, `bgm`, `photo-quote`, `thumbnail`, `test`)
+> - 요청 필드: `file` (multipart/form-data)
+> - 응답: `{ fileUrl: "https://..." }`
 
 ---
 
-## 25. 결제
-
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| POST | `/payments` | 결제 요청 (PG사 연동) |
-| POST | `/payments/webhook` | PG사 결제 Webhook 수신 처리 |
-| GET | `/payments/{paymentId}` | 결제 내역 조회 |
-| GET | `/mcards/{mcardId}/payment-status` | 청첩장 결제 상태 조회 (워터마크 여부) |
-
----
-
-## 26. 헬스 체크
+## 25. 헬스 체크
 
 | 메서드 | 엔드포인트 | 설명 |
 |--------|-----------|------|
@@ -288,4 +285,34 @@
   - 카카오 OAuth 2.0 로그인 성공 시 서버가 자체 JWT를 생성하여 `{ userId, accessToken }` JSON으로 응답
   - 이후 모든 요청에서 클라이언트가 `Authorization: Bearer {accessToken}` 헤더를 포함하고, 서버의 JWT Filter가 서명 검증 후 SecurityContext에 userId 저장
   - JWT 스펙: HS256 알고리즘, payload에 `userId` 포함, 만료 7일
-- 하객용 API (`/w/{inviteCode}`,
+- 하객용 API (`/w/{inviteCode}`, RSVP 제출, 방명록 작성 등)는 **인증 불필요 (permitAll)**
+- 정적 목록 API (`/intros`, `/themes`, `/themes/**`, `/greetings/samples`, `/quotes/samples`, `/notices/samples`, `/bgm/samples`)는 **인증 불필요 (permitAll)**
+- 파일 업로드는 **Cloudflare R2 (S3 호환)** 에 저장되며, 환경변수로 설정한다
+- QR 코드 API (`/mcards/{mcardId}/qrcode`)는 `image/png` 바이너리를 직접 반환한다 (Content-Disposition: attachment)
+- 모든 JSON API 응답은 공통 래퍼로 감싼다: `{ code, message, datas }`
+
+### 공통 응답 형식
+
+```json
+{
+  "code": "SUCCESS",
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "datas": { ... }
+}
+```
+
+### 환경 변수 목록
+
+| 변수명 | 설명 |
+|--------|------|
+| `KAKAO_CLIENT_ID` | 카카오 OAuth 앱 키 |
+| `KAKAO_CLIENT_SECRET` | 카카오 OAuth 시크릿 |
+| `KAKAO_REDIRECT_URI` | 카카오 콜백 URL |
+| `CLOUDFLARE_ACCOUNT_ID` | R2 계정 ID |
+| `CLOUDFLARE_ACCESS_KEY_ID` | R2 액세스 키 |
+| `CLOUDFLARE_SECRET_ACCESS_KEY` | R2 시크릿 키 |
+| `CLOUDFLARE_BUCKET_NAME` | R2 버킷명 |
+| `CLOUDFLARE_BUCKET_URL` | R2 퍼블릭 URL (https://...) |
+| `JWT_SECRET` | JWT 서명 비밀키 |
+| `APP_BASE_URL` | 서비스 기본 URL — QR 코드 생성 시 사용 (예: `https://mcard.example.com`) |
+| `SPRING_PROFILES_ACTIVE` | 활성 프로필 (`local` / `dev` / `prd`) |

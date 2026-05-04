@@ -38,5 +38,23 @@ public class McardSchedule {
     /** 예식장 준비 시간 (분 단위) */
     @Builder.Default
     private Integer prepTimeMinutes = 30;
-}
 
+    /** 생성 일시 */
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    /** 수정 일시 */
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    private void onPrePersist() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    private void onPreUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+}

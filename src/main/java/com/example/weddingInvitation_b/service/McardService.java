@@ -13,7 +13,6 @@ public interface McardService {
     McardResponseDto getMcard(Long mcardId);
     McardResponseDto getMcardByInviteCode(String inviteCode);
     McardResponseDto createMcard(McardCreateRequestDto requestDto, Long userId);
-    McardResponseDto updateMcard(Long mcardId, McardCreateRequestDto requestDto);
-    void deleteMcard(Long mcardId);
+    McardResponseDto updateMcard(Long mcardId, McardCreateRequestDto requestDto, Long userId);
+    void deleteMcard(Long mcardId, Long userId);
 }
-

@@ -203,6 +203,7 @@ CLOUDFLARE_BUCKET_NAME=prod-wedding-bucket
 
 # Domain
 APP_DOMAIN=https://prod.example.com
+APP_BASE_URL=https://prod.example.com
 ```
 
 **개발 환경 변수**
@@ -227,6 +228,7 @@ CLOUDFLARE_BUCKET_NAME=dev-wedding-bucket
 
 # Domain
 APP_DOMAIN=https://dev.example.com
+APP_BASE_URL=https://dev.example.com
 ```
 
 ### 4-4. 헬스 체크 기반 배포 검증

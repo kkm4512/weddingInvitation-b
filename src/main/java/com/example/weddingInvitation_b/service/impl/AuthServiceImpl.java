@@ -112,19 +112,4 @@ public class AuthServiceImpl implements AuthService {
             .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. userId=" + userId));
         return UserResponseDto.from(user);
     }
-
-    /**
-     * 로그아웃 처리
-     *
-     * <p>JWT 기반 Stateless 인증이므로 서버에서 별도로 무효화할 상태가 없다.
-     * 쿠키 삭제(access_token MaxAge=0)는 Controller에서 처리한다.
-     * 추후 카카오 토큰 만료 API 호출 등이 필요하면 여기에 추가한다.</p>
-     *
-     * @param userId 로그아웃하는 사용자 ID
-     */
-    @Override
-    public void logout(Long userId) {
-        // JWT Stateless: 서버 상태 없음 (쿠키 삭제는 Controller에서 처리)
-        // 추후 카카오 토큰 만료 API 호출 등 서버사이드 로그아웃 로직 추가 가능
-    }
 }

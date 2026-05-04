@@ -394,7 +394,6 @@
 - 편집 내용 전체 저장 (저장하기 버튼)
 - 실시간 미리보기 (편집 페이지 좌측 패널)
 - 공개 URL로 하객에게 공유 (예: mcard.서비스도메인/w/{초대코드})
-- 워터마크 미노출은 결제 후 활성화
 
 **Use Case**
 | Actor | Use Case |
@@ -426,22 +425,36 @@
 
 ---
 
-## 7. 결제
+## 7. 기술 아키텍처 개요
 
-**기능**
-- 무료 플랜: 워터마크 포함 제공
-- 유료 결제 후: 워터마크 제거, 예식일 +30일 후까지 사용 가능
-- 결제 수단 연동 (PG사 연동)
+### Frontend (React)
+- 편집 페이지에서 API 호출 → Spring Boot → MySQL/Cloudflare R2
 
-**Use Case**
-| Actor | Use Case |
-|-------|----------|
-| 사용자 | 결제 요청 |
-| 시스템 | 결제 승인 후 워터마크 제거 처리 |
+### Backend (Spring Boot)
+- 3-레이어 아키텍처: Controller → Service (Interface/Impl) → Repository
+- JWT 기반 Stateless 인증 (카카오 OAuth 2.0 + 자체 JWT)
+- Cloudflare R2 (S3 호환) 파일 스토리지
+- MySQL 8.0 + JPA (Hibernate)
+
+### 인프라
+- Docker 컨테이너화 (App + MySQL)
+- Nginx 리버스 프록시 / 로드 밸런서
+- 환경별 분리: local / dev / prd
 
 ---
 
-## 8. 기술 아키텍처 개요
+## 8. 환경 변수
 
-### Frontend (React)
-- 편집 
+| 변수명 | 설명 |
+|--------|------|
+| `KAKAO_CLIENT_ID` | 카카오 OAuth 앱 키 |
+| `KAKAO_CLIENT_SECRET` | 카카오 OAuth 시크릿 |
+| `KAKAO_REDIRECT_URI` | 카카오 콜백 URL |
+| `CLOUDFLARE_ACCOUNT_ID` | R2 계정 ID |
+| `CLOUDFLARE_ACCESS_KEY_ID` | R2 액세스 키 |
+| `CLOUDFLARE_SECRET_ACCESS_KEY` | R2 시크릿 키 |
+| `CLOUDFLARE_BUCKET_NAME` | R2 버킷명 |
+| `CLOUDFLARE_BUCKET_URL` | R2 퍼블릭 URL |
+| `JWT_SECRET` | JWT 서명 비밀키 |
+| `APP_BASE_URL` | 서비스 기본 URL (QR 코드 생성 등, 예: `https://mcard.example.com`) |
+| `SPRING_PROFILES_ACTIVE` | 활성 프로필 (local / dev / prd) |

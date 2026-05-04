@@ -114,17 +114,17 @@ public class AuthController {
     }
 
     /**
-     * 로그아웃 처리
-     *
-     * <p>JWT는 Stateless이므로 서버에서 별도로 무효화할 상태가 없다.
-     * 클라이언트가 저장된 accessToken을 직접 삭제하면 로그아웃이 완료된다.</p>
-     *
-     * @return 로그아웃 결과
+     * 테스트용 로그인 (개발 환경 전용)
+     * 실제 카카오 로그인 대신 DB 사용자 ID로 JWT 발급
      */
-    @PostMapping("/logout")
-    public ApiResponse<Void> logout() {
-        // JWT Stateless: 클라이언트가 토큰을 삭제하면 로그아웃 완료
-        // 추후 토큰 블랙리스트 등 서버사이드 무효화 로직 추가 가능
-        return ApiResponse.success();
+    @GetMapping("/test-login/{userId}")
+    public ApiResponse<LoginResponseDto> testLogin(@PathVariable Long userId) {
+        // 사용자 존재 확인
+        UserResponseDto user = authService.getCurrentUser(userId);
+
+        // JWT 생성
+        String jwt = jwtProvider.generateToken(userId);
+
+        return ApiResponse.success(LoginResponseDto.of(userId, jwt));
     }
 }

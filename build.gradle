@@ -44,6 +44,10 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
+	// Cloudflare R2 (S3 호환 - AWS SDK v2)
+	implementation platform('software.amazon.awssdk:bom:2.25.40')
+	implementation 'software.amazon.awssdk:s3'
+
 	// Utilities
 	implementation 'commons-io:commons-io:2.13.0'
 	implementation 'com.google.zxing:core:3.5.3'

@@ -35,12 +35,5 @@ public interface AuthService {
      * @return 사용자 정보
      */
     UserResponseDto getCurrentUser(Long userId);
-
-    /**
-     * 로그아웃 처리
-     *
-     * @param userId 로그아웃하는 사용자 ID
-     */
-    void logout(Long userId);
 }
 

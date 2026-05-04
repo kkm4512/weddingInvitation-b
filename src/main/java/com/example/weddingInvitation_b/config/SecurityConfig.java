@@ -65,6 +65,16 @@ public class SecurityConfig {
 
                 // 하객용 공개 청첩장 뷰 - 인증 불필요
                 .requestMatchers("/api/v1/w/**").permitAll()
+                .requestMatchers("/api/v1/mcards/preview/**").permitAll()
+
+                // 정적 목록 조회 - 인증 불필요
+                .requestMatchers(HttpMethod.GET, "/api/v1/intros").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/themes").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/themes/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/greetings/samples").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/quotes/samples").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/notices/samples").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/bgm/samples").permitAll()
 
                 // 하객 RSVP 제출, 방명록 작성 - 인증 불필요
                 .requestMatchers(HttpMethod.POST, "/api/v1/mcards/*/rsvp").permitAll()
