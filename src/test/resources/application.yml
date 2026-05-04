@@ -13,8 +13,32 @@ spring:
     properties:
       hibernate:
         format_sql: false
+  # OAuth2 자동 설정 비활성화 (테스트 환경에서 카카오 연동 불필요)
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration
+
+# 테스트용 더미 환경변수 (Spring 컨텍스트 로딩 시 필요)
+kakao:
+  client:
+    id: test-kakao-client-id
+    secret: test-kakao-client-secret
+  redirect:
+    uri: http://localhost:8080/api/v1/auth/kakao/callback
+
+cloudflare:
+  account:
+    id: test-account-id
+  access:
+    key:
+      id: test-access-key-id
+  secret:
+    access:
+      key: test-secret-key
+  bucket:
+    name: test-bucket
+    url: http://localhost/test-bucket
 
 logging:
   level:
     root: ERROR
-    com.example.weddingInvitation_b: ERROR
+    com.example.weddingInvitation_b: DEBUG

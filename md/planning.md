@@ -9,7 +9,7 @@
 | 서비스명 | 모바일 청첩장 제작 서비스 |
 | 목적 | 사용자가 직접 모바일 청첩장을 커스터마이징하고 공유할 수 있는 웹 서비스 |
 | 기술 스택 | Frontend: React / Backend: Java Spring Boot |
-| 인증 방식 | 카카오 로그인 / SNS 소셜 로그인 (OAuth 2.0) |
+| 인증 방식 | 카카오 OAuth 2.0 소셜 로그인 + 자체 JWT 발급 |
 
 ---
 
@@ -26,18 +26,45 @@
 
 ## 3. 인증 (Authentication)
 
-### 3-1. 소셜 로그인
-- 카카오 로그인 (OAuth 2.0) — 주요 수단
-- 구글 / 네이버 로그인 옵션 제공
-- 로그인 성공 시 Spring Security OAuth2 세션으로 관리
-- 로그아웃 기능
+### 3-1. 소셜 로그인 + JWT 인증 흐름
 
-### 3-2. Use Case
+카카오 OAuth 2.0으로 사용자를 인증하되, 세션 대신 **자체 JWT**를 발급하여 인증 상태를 관리한다.
+
+```
+[로그인 흐름]
+1. 클라이언트 → GET /api/v1/auth/kakao        → 카카오 인증 URL 반환
+2. 클라이언트    window.location.href = url      → 카카오 로그인 페이지 이동
+3. 카카오       → GET /api/v1/auth/kakao/callback?code=xxx
+4. 서버         → 카카오 액세스 토큰 교환 → 사용자 정보 조회 → DB upsert
+5. 서버         → 자체 JWT 생성 (payload: userId)
+6. 서버         → { userId, accessToken } JSON으로 반환
+
+[인증 흐름]
+1. 클라이언트 → API 요청 (Authorization: Bearer {accessToken} 헤더 포함)
+2. 서버 JWT Filter → JWT 검증 → SecurityContext에 userId 저장
+3. Controller → SecurityContext에서 userId 추출 → 비즈니스 로직 처리
+```
+
+**세션 대신 JWT를 선택한 이유**
+- 서버 확장(수평 스케일) 시 세션 공유 불필요
+- Stateless 구조로 로드밸런서 친화적
+- Stateless 구조로 서버 부하 없음
+
+### 3-2. JWT 스펙
+| 항목 | 내용 |
+|------|------|
+| 알고리즘 | HS256 |
+| Payload | `userId`, `iat`, `exp` |
+| 만료 시간 | 7일 |
+| 전달 방식 | JSON 응답 body (`accessToken`) → 클라이언트 저장 후 Authorization: Bearer 헤더로 전송 |
+
+### 3-3. Use Case
 | Actor | Use Case |
 |-------|----------|
 | 비로그인 사용자 | 소셜 로그인 요청 |
-| 시스템 | 카카오 OAuth 인증 후 Spring Security 세션 발급 |
-| 로그인 사용자 | 로그아웃 |
+| 시스템 | 카카오 OAuth 인증 후 자체 JWT 발급 및 JSON 반환 |
+| 로그인 사용자 | JWT Bearer 토큰을 통한 API 인증 |
+| 로그인 사용자 | 로그아웃 (클라이언트 토큰 삭제) |
 
 ---
 
@@ -417,37 +444,4 @@
 ## 8. 기술 아키텍처 개요
 
 ### Frontend (React)
-- 편집 페이지: 실시간 미리보기 패널(좌) + 섹션 편집 패널(우) 레이아웃
-- 각 편집 섹션은 독립 컴포넌트로 구성
-- 전역 상태 관리: Redux Toolkit 또는 Zustand (청첩장 데이터 통합 관리)
-- 지도: 카카오맵 SDK 연동
-- 소셜 로그인: 카카오 JS SDK / OAuth 2.0 Redirect Flow
-- 공유 기능: 카카오 공유 SDK, Clipboard API
-
-### Backend (Java Spring Boot)
-- RESTful API 서버
-- 소셜 로그인 처리 (카카오 OAuth2 클라이언트, Spring Security)
-- 청첩장 데이터 CRUD
-- 이미지/파일 업로드 처리 (Cloudflare R2)
-- RSVP 응답 수집 및 조회
-- 방명록 CRUD
-- QR 코드 생성
-- 결제 연동 (PG사 Webhook 처리)
-
----
-
-## 9. 주요 화면 목록
-
-| 화면명 | 설명 |
-|--------|------|
-| 로그인 페이지 | 카카오/SNS 로그인 버튼 |
-| 청첩장 편집 페이지 | 좌측 미리보기 + 우측 섹션 편집 |
-| 청첩장 공개 뷰 | 하객이 보는 청첩장 (mcard 도메인) |
-| RSVP 응답 조회 | 참석의사 응답 목록 |
-| 방명록 관리 | 하객 방명록 조회 및 답글 |
-| 결제 페이지 | 워터마크 제거 결제 |
-| 제작 내역 | 사용자 청첩장 목록 |
-
----
-
-_작성일: 2026-05-03_
+- 편집 

@@ -19,7 +19,7 @@
 - **Language**: Java 17
 - **Database**: MySQL 8.0
 - **ORM**: JPA (Hibernate)
-- **Authentication**: Kakao OAuth 2.0 (Spring Security OAuth2 Client)
+- **Authentication**: 카카오 OAuth 2.0 소셜 로그인 + 자체 JWT 발급 (Authorization: Bearer)
 - **File Storage**: Cloudflare R2
 - **Build Tool**: Gradle
 
@@ -153,6 +153,7 @@ services:
 **Load Balancer 설정 (/etc/nginx/nginx.conf)**
 ```nginx
 upstream prod_backend {
+    least_conn;  # 현재 활성 연결 수가 가장 적은 서버로 라우팅 (쏠림 방지)
     server prod-app-01:8080;
     server prod-app-02:8080;
     server prod-app-03:8080;
@@ -289,7 +290,10 @@ dev-db.example.com:3306/wedding_invitation_dev
 
 ### 6-2. 애플리케이션 보안
 
-- **카카오 OAuth 2.0 인증**: Spring Security OAuth2 Client 기반 소셜 로그인
+- **카카오 OAuth 2.0 인증**: 카카오 소셜 로그인으로 사용자 인증
+- **자체 JWT 발급**: 카카오 로그인 성공 시 서버가 HS256 JWT 생성 (payload: userId, 만료 7일)
+- **JWT 전달**: 로그인 응답 body(`accessToken`)로 반환 → 클라이언트가 저장 후 `Authorization: Bearer` 헤더로 전송
+- **JWT Filter**: 모든 인증 필요 요청에서 JWT 서명 검증 후 SecurityContext에 userId 저장
 - **CORS 설정**: 도메인별 접근 제어
 - **Rate Limiting**: Nginx를 통한 요청 제한
 - **Input Validation**: 모든 입력 데이터 검증
@@ -519,17 +523,4 @@ echo "배포 완료: $NEW_IMAGE"
 
 ### 10-1. 장애 유형별 대응
 
-- **서버 다운**: 로드 밸런서가 자동으로 트래픽 분산
-- **DB 장애**: 읽기 전용 모드로 전환, 캐시 활용
-- **네트워크 장애**: CDN 활용, 정적 페이지 제공
-
-### 10-2. 재해 복구
-
-- **RTO (Recovery Time Objective)**: 4시간
-- **RPO (Recovery Point Objective)**: 1시간
-- **다중 리전**: AWS Multi-AZ 구성
-
----
-
-_작성일: 2026-05-03_
-_최종 수정일: 2026-05-03 — Health Check 기반 자동 롤백 전략 추가_
+- **서버 다운**: 로드 밸런서가 자�

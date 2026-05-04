@@ -1,12 +1,15 @@
 package com.example.weddingInvitation_b.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -16,18 +19,26 @@ import java.util.List;
 /**
  * Spring Security 및 CORS 설정
  *
- * <p>인증/인가 규칙과 CORS 허용 정책을 정의한다.
- * 인증이 불필요한 공개 엔드포인트는 명시적으로 permitAll 처리한다.</p>
+ * <p>JWT 기반 Stateless 인증을 적용한다.
+ * 세션을 사용하지 않으며, 모든 요청은 JwtAuthenticationFilter에서 검증된다.</p>
  */
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
      * Security 필터 체인 설정
      *
-     * <p>공개 엔드포인트(헬스 체크, 인증, 하객용 공개 뷰 등)는 인증 없이 접근 허용.
-     * 나머지 모든 요청은 인증 필요.</p>
+     * <p>JWT Stateless 인증 적용:
+     * <ul>
+     *   <li>세션 생성 정책: STATELESS (서버가 세션을 생성하거나 사용하지 않음)</li>
+     *   <li>JwtAuthenticationFilter를 UsernamePasswordAuthenticationFilter 앞에 등록</li>
+     *   <li>공개 엔드포인트는 permitAll, 나머지는 인증 필요</li>
+     * </ul>
+     * </p>
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -37,6 +48,11 @@ public class SecurityConfig {
 
             // REST API 서버이므로 CSRF 비활성화
             .csrf(AbstractHttpConfigurer::disable)
+
+            // JWT Stateless 인증 - 세션 생성/사용 안 함
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
 
             // 엔드포인트별 인가 규칙
             .authorizeHttpRequests(auth -> auth
@@ -60,7 +76,10 @@ public class SecurityConfig {
 
             // 기본 formLogin / httpBasic 비활성화 (REST API 서버)
             .formLogin(AbstractHttpConfigurer::disable)
-            .httpBasic(AbstractHttpConfigurer::disable);
+            .httpBasic(AbstractHttpConfigurer::disable)
+
+            // JwtAuthenticationFilter 등록 (UsernamePasswordAuthenticationFilter 앞에 실행)
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -69,6 +88,7 @@ public class SecurityConfig {
      * CORS 허용 정책
      *
      * <p>프론트엔드 개발 서버(React)로부터의 요청을 허용한다.
+     * 쿠키(JWT) 전송을 위해 allowCredentials(true) 적용.
      * 운영 환경에서는 allowedOrigins를 실제 도메인으로 교체해야 한다.</p>
      */
     @Bean
@@ -87,7 +107,7 @@ public class SecurityConfig {
         // 허용할 헤더
         config.setAllowedHeaders(List.of("*"));
 
-        // 쿠키/세션 포함 요청 허용
+        // JWT 쿠키 포함 요청 허용 (credentials: true)
         config.setAllowCredentials(true);
 
         // Preflight 캐시 시간 (초)

@@ -38,6 +38,10 @@ cloudflare:
     name: ${CLOUDFLARE_BUCKET_NAME}
     url: ${CLOUDFLARE_BUCKET_URL}
 
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET}
+
 # Logging 공통
 logging:
   level:

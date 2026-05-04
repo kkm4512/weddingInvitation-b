@@ -30,14 +30,14 @@ public class HealthController {
      */
     @GetMapping
     public ApiResponse<Map<String, Object>> healthCheck() {
-        Map<String, Object> healthData = new HashMap<>();
-        healthData.put("status", "UP");
-        healthData.put("timestamp", LocalDateTime.now());
-        healthData.put("service", "wedding-invitation-backend");
-        healthData.put("version", "1.0.0");
+        Map<String, Object> map = new HashMap<>();
+        map.put("status", "UP");
+        map.put("timestamp", LocalDateTime.now());
+        map.put("service", "wedding-invitation-backend");
+        map.put("version", "0.0.1");
 
         log.debug("Health check requested at {}", LocalDateTime.now());
 
-        return ApiResponse.success(healthData);
+        return ApiResponse.success(map);
     }
 }

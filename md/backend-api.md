@@ -1,7 +1,7 @@
 # 모바일 청첩장 서비스 - 백엔드 API 명세
 
 > 기준: React(Frontend) ↔ Spring Boot(Backend) RESTful API  
-> 인증: 카카오 OAuth 2.0 (Spring Security OAuth2 Client 세션 기반)  
+> 인증: 카카오 OAuth 2.0 소셜 로그인 + 자체 JWT (Authorization: Bearer)  
 > Base URL: `/api/v1`
 
 ---
@@ -11,8 +11,8 @@
 | 메서드 | 엔드포인트 | 설명 |
 |--------|-----------|------|
 | GET | `/auth/kakao` | 카카오 OAuth 로그인 시작 |
-| GET | `/auth/kakao/callback` | 카카오 OAuth 콜백 처리 및 세션 발급 |
-| POST | `/auth/logout` | 로그아웃 (세션 무효화) |
+| GET | `/auth/kakao/callback` | 카카오 OAuth 콜백 처리 및 JWT 발급 ({ userId, accessToken } JSON 반환) |
+| POST | `/auth/logout` | 로그아웃 (클라이언트 토큰 삭제 안내) |
 | GET | `/auth/me` | 현재 로그인 사용자 정보 조회 |
 
 ---
@@ -284,12 +284,8 @@
 
 ## API 설계 참고사항
 
-- 모든 인증 필요 API는 Spring Security 세션 쿠키 기반으로 처리 (카카오 OAuth 2.0 로그인 후 세션 발급)
-- 하객용 API (`/w/{inviteCode}`, RSVP 제출, 방명록 작성)는 인증 불필요
-- `/health` 엔드포인트는 인증 없이 접근 가능 (Docker, Nginx, CI/CD 배포 검증용)
-- 파일 업로드는 `multipart/form-data` 사용
-- 페이징이 필요한 목록 API는 `?page=0&size=20` 쿼리 파라미터 적용 권장
-
----
-
-_작성일: 2026-05-03_
+- 모든 인증 필요 API는 **JWT 기반**으로 처리한다
+  - 카카오 OAuth 2.0 로그인 성공 시 서버가 자체 JWT를 생성하여 `{ userId, accessToken }` JSON으로 응답
+  - 이후 모든 요청에서 클라이언트가 `Authorization: Bearer {accessToken}` 헤더를 포함하고, 서버의 JWT Filter가 서명 검증 후 SecurityContext에 userId 저장
+  - JWT 스펙: HS256 알고리즘, payload에 `userId` 포함, 만료 7일
+- 하객용 API (`/w/{inviteCode}`,
