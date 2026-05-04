@@ -50,11 +50,7 @@ Docker Nginx Load Balancer
 [개발 환경]
 개발 도메인 (dev.example.com)
     ↓ (DNS 라우팅)
-Docker Nginx Load Balancer
-    ↓ (로드 밸런싱)
 ├── 개발 서버 1 (dev-app-01)
-├── 개발 서버 2 (dev-app-02)
-└── 개발 서버 N (dev-app-N)
 ```
 
 **특징:**
