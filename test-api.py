@@ -193,16 +193,16 @@ assert_ok("GET schedule", code, resp)
 
 # ── 6. 예식 장소 ──────────────────────────────────────────────
 info("=== 6. 예식 장소 ===")
-code, resp = PUT(f"/api/v1/mcards/{MCARD_ID}/venue", {"venueName": "그랜드 웨딩홀", "venueAddress": "서울시 강남구", "lat": 37.5172, "lng": 127.0473})
+code, resp = PUT(f"/api/v1/mcards/{MCARD_ID}/venue", {"venueName": "그랜드 웨딩홀", "hallName": "2F 로즈홀", "address": "서울시 강남구", "lat": 37.5172, "lng": 127.0473, "showMap": True, "lockMap": False})
 assert_ok("PUT venue", code, resp)
 code, resp = GET(f"/api/v1/mcards/{MCARD_ID}/venue")
 assert_ok("GET venue", code, resp)
 
-code, resp = POST(f"/api/v1/mcards/{MCARD_ID}/venue/transports", {"transportType": "지하철", "description": "2호선 강남역 3번 출구 도보 5분"})
+code, resp = POST(f"/api/v1/mcards/{MCARD_ID}/venue/transports", {"type": "subway", "description": "2호선 강남역 3번 출구 도보 5분", "showIcon": True})
 assert_ok("POST venue/transports", code, resp)
 transport_id = extract(resp, "datas", "transportId")
 if transport_id:
-    code, resp = PUT(f"/api/v1/mcards/{MCARD_ID}/venue/transports/{transport_id}", {"transportType": "지하철", "description": "수정된 설명"})
+    code, resp = PUT(f"/api/v1/mcards/{MCARD_ID}/venue/transports/{transport_id}", {"type": "subway", "description": "수정된 설명"})
     assert_ok(f"PUT venue/transports/{transport_id}", code, resp)
     code, resp = DELETE(f"/api/v1/mcards/{MCARD_ID}/venue/transports/{transport_id}")
     assert_ok(f"DELETE venue/transports/{transport_id}", code, resp)
@@ -263,14 +263,13 @@ if code == 200:
         code, resp = PUT(f"/api/v1/mcards/{MCARD_ID}/gallery/order", {"photoIds": [photo_id]})
         assert_ok("PUT gallery/order", code, resp)
 
+        code, resp = PUT(f"/api/v1/mcards/{MCARD_ID}/gallery/layout", {"layoutType": "grid"})
+        assert_ok("PUT gallery/layout", code, resp)
+
         code, resp = DELETE(f"/api/v1/mcards/{MCARD_ID}/gallery/{photo_id}")
         assert_ok(f"DELETE gallery/{photo_id}", code, resp)
 else:
     skip(f"POST gallery — R2 env 미설정 (HTTP {code}: {str(resp)[:100]})")
-
-# gallery/layout 은 사진 없이도 동작 (레이아웃 설정만)
-code, resp = PUT(f"/api/v1/mcards/{MCARD_ID}/gallery/layout", {"layoutType": "grid"})
-assert_ok("PUT gallery/layout", code, resp)
 
 # ── 12. 파일 업로드 ────────────────────────────────────────────
 info("=== 12. 파일 업로드 ===")
@@ -300,11 +299,11 @@ assert_ok("PUT contacts", code, resp)
 code, resp = GET(f"/api/v1/mcards/{MCARD_ID}/contacts")
 assert_ok("GET contacts", code, resp)
 
-code, resp = POST(f"/api/v1/mcards/{MCARD_ID}/accounts", {"accountType": "groom", "bankName": "국민은행", "accountNumber": "123-456-789012", "accountHolder": "김철수"})
+code, resp = POST(f"/api/v1/mcards/{MCARD_ID}/accounts", {"side": "groom", "bankName": "국민은행", "accountNumber": "123-456-789012", "accountHolder": "김철수"})
 assert_ok("POST accounts", code, resp)
 account_id = extract(resp, "datas", "accountId")
 if account_id:
-    code, resp = PUT(f"/api/v1/mcards/{MCARD_ID}/accounts/{account_id}", {"accountType": "groom", "bankName": "신한은행", "accountNumber": "111-222-3334", "accountHolder": "김철수"})
+    code, resp = PUT(f"/api/v1/mcards/{MCARD_ID}/accounts/{account_id}", {"side": "groom", "bankName": "신한은행", "accountNumber": "111-222-3334", "accountHolder": "김철수"})
     assert_ok(f"PUT accounts/{account_id}", code, resp)
     code, resp = GET(f"/api/v1/mcards/{MCARD_ID}/accounts")
     assert_ok("GET accounts", code, resp)

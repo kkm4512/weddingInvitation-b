@@ -201,6 +201,10 @@ CLOUDFLARE_ACCESS_KEY_ID=prod_access_key
 CLOUDFLARE_SECRET_ACCESS_KEY=prod_secret_key
 CLOUDFLARE_BUCKET_NAME=prod-wedding-bucket
 
+# Naver Maps
+NAVER_MAP_CLIENT_ID=prod_naver_client_id
+NAVER_MAP_CLIENT_SECRET=prod_naver_client_secret
+
 # Domain
 APP_DOMAIN=https://prod.example.com
 APP_BASE_URL=https://prod.example.com
@@ -225,6 +229,10 @@ CLOUDFLARE_ACCOUNT_ID=dev_account_id
 CLOUDFLARE_ACCESS_KEY_ID=dev_access_key
 CLOUDFLARE_SECRET_ACCESS_KEY=dev_secret_key
 CLOUDFLARE_BUCKET_NAME=dev-wedding-bucket
+
+# Naver Maps
+NAVER_MAP_CLIENT_ID=dev_naver_client_id
+NAVER_MAP_CLIENT_SECRET=dev_naver_client_secret
 
 # Domain
 APP_DOMAIN=https://dev.example.com

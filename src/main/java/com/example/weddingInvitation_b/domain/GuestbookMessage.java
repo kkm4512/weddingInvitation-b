@@ -44,17 +44,10 @@ public class GuestbookMessage {
     @Builder.Default
     private Boolean isSecret = false;
     
-    /** 신랑신부 답글 내용 */
-    @Column(columnDefinition = "TEXT")
-    private String replyContent;
-    
     /** 메시지 생성 일시 */
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-    
-    /** 답글 생성 일시 */
-    private LocalDateTime repliedAt;
-    
+
     /** 메시지 삭제 여부 */
     @Builder.Default
     private Boolean isDeleted = false;

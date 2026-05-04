@@ -34,6 +34,9 @@ public class FileServiceImpl implements FileService {
     @Value("${cloudflare.bucket.url}")
     private String bucketUrl;
 
+    @Value("${cloudflare.public.image.url}")
+    private String publicImageUrl;
+
     /**
      * 파일을 R2에 업로드하고 접근 URL을 반환한다.
      *
@@ -71,7 +74,7 @@ public class FileServiceImpl implements FileService {
             throw new FileUploadException("파일 업로드 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
 
-        return bucketUrl + "/" + key;
+        return publicImageUrl + "/" + key;
     }
 
     /**
@@ -82,13 +85,46 @@ public class FileServiceImpl implements FileService {
      * @param fileUrl 삭제할 파일의 전체 URL
      * @throws FileUploadException 삭제 중 오류 발생 시
      */
+    /**
+     * byte[] 데이터를 R2에 업로드하고 접근 URL을 반환한다.
+     *
+     * <p>네이버 Static Map 이미지 등 외부 API에서 받은 바이트 배열을 직접 업로드할 때 사용한다.</p>
+     *
+     * @param data        업로드할 바이트 배열
+     * @param folder      저장할 폴더 경로
+     * @param filename    파일명 (UUID + 확장자 형태로 호출 측에서 생성)
+     * @param contentType MIME 타입
+     * @return 업로드된 파일의 공개 접근 URL
+     */
+    @Override
+    public String uploadBytes(byte[] data, String folder, String filename, String contentType) {
+        if (data == null || data.length == 0) {
+            throw new FileUploadException("업로드할 데이터가 없습니다.");
+        }
+
+        String key = folder + "/" + filename;
+
+        PutObjectRequest putRequest = PutObjectRequest.builder()
+            .bucket(bucketName)
+            .key(key)
+            .contentType(contentType)
+            .contentLength((long) data.length)
+            .build();
+
+        s3Client.putObject(putRequest, RequestBody.fromBytes(data));
+
+        return publicImageUrl + "/" + key;
+    }
+
     @Override
     public void delete(String fileUrl) {
         if (fileUrl == null || fileUrl.isBlank()) {
             return;
         }
 
-        String prefix = bucketUrl + "/";
+        // 업로드 URL은 publicImageUrl 기준으로 생성되므로 동일 prefix로 키 추출
+        // bucketUrl(내부 스토리지 URL)과 혼용하지 않도록 주의
+        String prefix = publicImageUrl + "/";
         if (!fileUrl.startsWith(prefix)) {
             throw new FileUploadException("유효하지 않은 파일 URL입니다: " + fileUrl);
         }

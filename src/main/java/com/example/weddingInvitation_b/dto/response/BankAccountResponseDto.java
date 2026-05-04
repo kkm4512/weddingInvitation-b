@@ -1,11 +1,15 @@
 package com.example.weddingInvitation_b.dto.response;
+
 import com.example.weddingInvitation_b.domain.BankAccount;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
+
 /** 계좌번호 응답 DTO */
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class BankAccountResponseDto {
     private Long accountId;
     private Long mcardId;
+    @JsonProperty("side")
     private String accountType;
     private String bankName;
     private String accountNumber;

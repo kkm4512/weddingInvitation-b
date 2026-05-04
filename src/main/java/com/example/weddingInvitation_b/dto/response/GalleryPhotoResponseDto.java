@@ -14,6 +14,7 @@ public class GalleryPhotoResponseDto {
     private Long photoId;
     private Long mcardId;
     private String imageUrl;
+    private String publicUrl;
     private Integer displayOrder;
     private String layoutType;
 
@@ -22,6 +23,7 @@ public class GalleryPhotoResponseDto {
             .photoId(entity.getPhotoId())
             .mcardId(entity.getMcard().getMcardId())
             .imageUrl(entity.getImageUrl())
+            .publicUrl(entity.getPublicUrl() != null ? entity.getPublicUrl() : entity.getImageUrl())
             .displayOrder(entity.getDisplayOrder())
             .layoutType(entity.getLayoutType())
             .build();

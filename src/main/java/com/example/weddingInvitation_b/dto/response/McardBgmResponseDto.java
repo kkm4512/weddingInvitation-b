@@ -14,6 +14,7 @@ public class McardBgmResponseDto {
     private Long bgmId;
     private Long mcardId;
     private String bgmUrl;
+    private String publicUrl;
     private String bgmTitle;
     private Boolean autoPlay;
 
@@ -22,6 +23,7 @@ public class McardBgmResponseDto {
             .bgmId(entity.getBgmId())
             .mcardId(entity.getMcard().getMcardId())
             .bgmUrl(entity.getBgmUrl())
+            .publicUrl(entity.getPublicUrl() != null ? entity.getPublicUrl() : entity.getBgmUrl())
             .bgmTitle(entity.getBgmTitle())
             .autoPlay(entity.getAutoPlay())
             .build();

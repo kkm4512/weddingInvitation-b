@@ -28,6 +28,8 @@ public class McardThumbnail {
     private Mcard mcard;
     
     private String kakaotalkThumbnailUrl;
+    private String kakaotalkPublicUrl;
     private String urlShareThumbnailUrl;
+    private String urlSharePublicUrl;
 }
 

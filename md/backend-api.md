@@ -36,6 +36,11 @@
 |--------|-----------|------|
 | GET | `/w/{inviteCode}` | 초대 코드로 공개 청첩장 조회 (하객 뷰) |
 
+- 응답 데이터는 `mcardId`, `title`, `inviteCode`, `hasWatermark`, `couple`, `greeting`, `schedule`, `venue`, `gallery`, `quote`, `video`, `accounts`, `contacts`, `rsvpSettings`, `guestbookSettings`, `guestbookMessages`, `wreath` 등을 포함합니다.
+- `schedule` 필드는 `weddingDate`, `weddingTime`, `showCalendar`을 함께 반환합니다.
+- `venue` 필드는 `hallName`, `lat`, `lng`, `mapImageUrl`, `transports(type, description)` 등을 포함합니다.
+  - `mapImageUrl`: PUT 저장 시 서버가 네이버 Static Map API로 자동 생성하여 Cloudflare R2에 저장한 PNG URL. 프론트엔드에서 `<img src="mapImageUrl">` 로 바로 사용한다.
+
 ---
 
 ## 4. 테마 설정
@@ -96,6 +101,71 @@
 | POST | `/mcards/{mcardId}/venue/transports` | 교통수단 안내 추가 |
 | PUT | `/mcards/{mcardId}/venue/transports/{transportId}` | 교통수단 안내 수정 |
 | DELETE | `/mcards/{mcardId}/venue/transports/{transportId}` | 교통수단 안내 삭제 |
+
+**PUT `/mcards/{mcardId}/venue` 요청 필드**
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `venueName` | String | 예식장명 |
+| `hallName` (또는 `floorInfo`) | String | 층/홀 정보 |
+| `address` | String | 주소 |
+| `lat` (또는 `latitude`) | Double | 위도 |
+| `lng` (또는 `longitude`) | Double | 경도 |
+| `showMap` | Boolean | 지도 표시 여부 |
+| `lockMap` (또는 `mapLocked`) | Boolean | 지도 잠금 여부 |
+| `showTransportIcons` | Boolean | 교통수단 아이콘 표시 여부 |
+
+> `mapImageUrl`은 클라이언트가 전송하지 않는다. `lat`/`lng`가 있으면 서버가 자동으로 네이버 Static Map API를 호출하여 PNG 이미지를 생성하고 Cloudflare R2에 업로드한 뒤 `map_image_url` 컬럼에 저장한다. 생성에 실패하더라도 venue 저장 자체는 성공한다 (기존 URL 유지, 오류는 로그에만 기록).
+
+---
+
+## 9-1. 주소 검색 및 지도 이미지 (카카오/네이버 Maps API 연동)
+
+예식 장소 편집 화면에서 주소 자동완성과 지도 이미지 미리보기를 지원하기 위한 외부 API 연동 엔드포인트.
+
+| 메서드 | 엔드포인트 | 설명 |
+|--------|-----------|------|
+| GET | `/address/search?query={키워드}` | 카카오 키워드 검색 API — 장소명·도로명·지번 주소 모두 검색 가능 (최대 10건) |
+| GET | `/address/map?lat={위도}&lng={경도}&width={px}&height={px}` | 네이버 Static Map API — 위경도 기반 PNG 지도 이미지 바이너리 직접 반환 |
+
+**`/address/search` 응답 예시**
+```json
+{
+  "code": 200,
+  "message": "Success",
+  "datas": {
+    "addresses": [
+      {
+        "placeName": "역삼역 2호선",
+        "addressName": "서울 강남구 강남대로 396",
+        "roadAddress": "서울 강남구 강남대로 396",
+        "jibunAddress": "서울 강남구 역삼동 678",
+        "latitude": 37.4977,
+        "longitude": 127.0279
+      }
+    ]
+  }
+}
+```
+
+> 검색 결과를 클릭하면 `venueName`, `address`, `lat`, `lng` 필드가 자동 입력된다.
+
+**`/address/map` 응답**
+
+- Content-Type: `image/png`
+- Body: PNG 이미지 바이너리 (네이버 Static Map API에서 수신한 그대로 프론트로 전달)
+- 기본 크기: `width=400`, `height=300` (쿼리 파라미터로 변경 가능)
+- 마커: 지정 좌표에 자동 표시
+
+```
+GET /api/v1/address/map?lat=37.4977&lng=127.0279&width=400&height=300
+→ HTTP 200 image/png (이미지 바이너리)
+```
+
+> - 네이버 Static Map `raster` 엔드포인트는 서버사이드 호출용으로 PNG를 직접 반환한다.
+> - 인증 헤더: `x-ncp-apigw-api-key-id` / `x-ncp-apigw-api-key` (Referer 헤더 불필요)
+> - URI는 `java.net.URI` 5-arg 생성자로 빌드하여 Spring `UriComponentsBuilder` 파싱을 우회한다 — `|` → `%7C`, 공백 → `%20` 인코딩 보장
+> - 두 엔드포인트 모두 JWT 인증 필요 (편집자 전용)
 
 ---
 
@@ -182,7 +252,6 @@
 | PUT | `/mcards/{mcardId}/guestbook/settings` | 방명록 활성/비활성 설정 저장 |
 | GET | `/mcards/{mcardId}/guestbook` | 방명록 메시지 목록 조회 |
 | POST | `/mcards/{mcardId}/guestbook` | 하객 방명록 메시지 작성 |
-| PUT | `/mcards/{mcardId}/guestbook/{messageId}/reply` | 방명록 메시지에 답글 작성 |
 | DELETE | `/mcards/{mcardId}/guestbook/{messageId}` | 방명록 메시지 삭제 |
 
 ---
@@ -314,5 +383,7 @@
 | `CLOUDFLARE_BUCKET_NAME` | R2 버킷명 |
 | `CLOUDFLARE_BUCKET_URL` | R2 퍼블릭 URL (https://...) |
 | `JWT_SECRET` | JWT 서명 비밀키 |
+| `NAVER_MAP_CLIENT_ID` | 네이버 클라우드 플랫폼 Maps Application Client ID |
+| `NAVER_MAP_CLIENT_SECRET` | 네이버 클라우드 플랫폼 Maps Application Client Secret |
 | `APP_BASE_URL` | 서비스 기본 URL — QR 코드 생성 시 사용 (예: `https://mcard.example.com`) |
 | `SPRING_PROFILES_ACTIVE` | 활성 프로필 (`local` / `dev` / `prd`) |

@@ -18,4 +18,12 @@ public class FileUploadResponseDto {
 
     /** 업로드된 파일의 접근 URL (Cloudflare R2 퍼블릭 URL) */
     private String fileUrl;
+
+    public String getPublicUrl() {
+        return fileUrl;
+    }
+
+    public String getOriginalUrl() {
+        return fileUrl;
+    }
 }

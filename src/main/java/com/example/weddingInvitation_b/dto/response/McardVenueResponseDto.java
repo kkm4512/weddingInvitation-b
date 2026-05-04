@@ -18,9 +18,12 @@ public class McardVenueResponseDto {
     private Long mcardId;
     private String venueName;
     private String floorInfo;
+    private String hallName;
     private String address;
     private Double latitude;
     private Double longitude;
+    private Double lat;
+    private Double lng;
     private String mapImageUrl;
     private Boolean showMap;
     private Boolean mapLocked;
@@ -33,14 +36,17 @@ public class McardVenueResponseDto {
             .mcardId(entity.getMcard().getMcardId())
             .venueName(entity.getVenueName())
             .floorInfo(entity.getFloorInfo())
+            .hallName(entity.getFloorInfo())
             .address(entity.getAddress())
             .latitude(entity.getLatitude())
             .longitude(entity.getLongitude())
+            .lat(entity.getLatitude())
+            .lng(entity.getLongitude())
             .mapImageUrl(entity.getMapImageUrl())
             .showMap(entity.getShowMap())
             .mapLocked(entity.getMapLocked())
             .showTransportIcons(entity.getShowTransportIcons())
-            .transports(List.of())  // 서비스에서 별도로 채움
+            .transports(List.of())  // 서비스에서 별도 채움
             .build();
     }
 }

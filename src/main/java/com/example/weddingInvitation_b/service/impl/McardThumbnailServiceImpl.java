@@ -81,18 +81,23 @@ public class McardThumbnailServiceImpl implements McardThumbnailService {
 
         String kakaoUrl = existing.getKakaotalkThumbnailUrl();
         String shareUrl = existing.getUrlShareThumbnailUrl();
+        String kakaoPublicUrl = existing.getKakaotalkPublicUrl();
+        String sharePublicUrl = existing.getUrlSharePublicUrl();
 
         if ("kakao".equalsIgnoreCase(type)) {
             if (kakaoUrl != null && !kakaoUrl.isBlank()) fileService.delete(kakaoUrl);
             kakaoUrl = newUrl;
+            kakaoPublicUrl = newUrl;
         } else {
             if (shareUrl != null && !shareUrl.isBlank()) fileService.delete(shareUrl);
             shareUrl = newUrl;
+            sharePublicUrl = newUrl;
         }
 
         McardThumbnail thumbnail = McardThumbnail.builder()
             .thumbnailId(existing.getThumbnailId()).mcard(mcard)
-            .kakaotalkThumbnailUrl(kakaoUrl).urlShareThumbnailUrl(shareUrl)
+            .kakaotalkThumbnailUrl(kakaoUrl).kakaotalkPublicUrl(kakaoPublicUrl)
+            .urlShareThumbnailUrl(shareUrl).urlSharePublicUrl(sharePublicUrl)
             .build();
 
         return McardThumbnailResponseDto.from(mcardThumbnailRepository.save(thumbnail));

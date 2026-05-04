@@ -65,7 +65,7 @@ public class SecurityConfig {
 
                 // 하객용 공개 청첩장 뷰 - 인증 불필요
                 .requestMatchers("/api/v1/w/**").permitAll()
-                .requestMatchers("/api/v1/mcards/preview/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/mcards/*/preview").permitAll()
 
                 // 정적 목록 조회 - 인증 불필요
                 .requestMatchers(HttpMethod.GET, "/api/v1/intros").permitAll()

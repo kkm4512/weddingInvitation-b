@@ -10,6 +10,15 @@ public class McardContactResponseDto {
     private String name;
     private String phoneNumber;
     private Boolean isVisible;
+
+    public String getRole() {
+        return contactType;
+    }
+
+    public String getRelation() {
+        return contactType;
+    }
+
     public static McardContactResponseDto from(McardContact e) {
         return McardContactResponseDto.builder()
             .contactId(e.getContactId()).mcardId(e.getMcard().getMcardId())

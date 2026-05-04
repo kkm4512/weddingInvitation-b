@@ -103,6 +103,7 @@ public class McardBgmServiceImpl implements McardBgmService {
         McardBgm bgm = McardBgm.builder()
             .bgmId(existing.getBgmId()).mcard(mcard)
             .bgmUrl(bgmUrl)
+            .publicUrl(bgmUrl)
             .bgmTitle(existing.getBgmTitle())
             .autoPlay(existing.getAutoPlay())
             .build();

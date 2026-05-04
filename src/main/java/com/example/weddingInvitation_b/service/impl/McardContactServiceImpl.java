@@ -64,8 +64,13 @@ public class McardContactServiceImpl implements McardContactService {
         List<McardContact> existing = mcardContactRepository.findByMcardMcardId(mcardId);
         mcardContactRepository.deleteAll(existing);
 
-        // 2. 새 연락처 저장
-        List<McardContact> saved = requestDto.getContacts().stream()
+        // 2. 새 연락처 저장 (contacts null 또는 빈 리스트면 빈 결과 반환)
+        List<McardContactRequestDto.ContactItemDto> items = requestDto.getContacts();
+        if (items == null || items.isEmpty()) {
+            return List.of();
+        }
+
+        List<McardContact> saved = items.stream()
             .map(item -> McardContact.builder()
                 .mcard(mcard)
                 .contactType(item.getContactType())

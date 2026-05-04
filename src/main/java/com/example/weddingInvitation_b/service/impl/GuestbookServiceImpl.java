@@ -4,7 +4,6 @@ import com.example.weddingInvitation_b.domain.GuestbookMessage;
 import com.example.weddingInvitation_b.domain.GuestbookSetting;
 import com.example.weddingInvitation_b.domain.Mcard;
 import com.example.weddingInvitation_b.dto.request.GuestbookMessageRequestDto;
-import com.example.weddingInvitation_b.dto.request.GuestbookReplyRequestDto;
 import com.example.weddingInvitation_b.dto.request.GuestbookSettingRequestDto;
 import com.example.weddingInvitation_b.dto.response.GuestbookMessageResponseDto;
 import com.example.weddingInvitation_b.dto.response.GuestbookSettingResponseDto;
@@ -17,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -85,38 +83,17 @@ public class GuestbookServiceImpl implements GuestbookService {
             }
         });
 
+        Boolean isSecret = requestDto.getIsSecret();
+        if (isSecret == null) {
+            isSecret = requestDto.getPassword() != null && !requestDto.getPassword().isBlank();
+        }
+
         GuestbookMessage message = GuestbookMessage.builder()
             .mcard(mcard).guestName(requestDto.getGuestName()).content(requestDto.getContent())
-            .isSecret(requestDto.getIsSecret() != null ? requestDto.getIsSecret() : false)
+            .isSecret(Boolean.TRUE.equals(isSecret))
             .build();
 
         return GuestbookMessageResponseDto.from(guestbookMessageRepository.save(message));
-    }
-
-    /**
-     * 방명록 메시지 답글 작성 (제작자용)
-     *
-     * @param mcardId    청첩장 ID
-     * @param messageId  답글 달 메시지 ID
-     * @param requestDto 답글 내용
-     * @return 업데이트된 메시지
-     */
-    @Override
-    @Transactional
-    public GuestbookMessageResponseDto addReply(Long mcardId, Long messageId, GuestbookReplyRequestDto requestDto) {
-        GuestbookMessage message = guestbookMessageRepository.findById(messageId)
-            .orElseThrow(() -> new EntityNotFoundException("방명록 메시지를 찾을 수 없습니다. messageId=" + messageId));
-
-        if (!message.getMcard().getMcardId().equals(mcardId))
-            throw new IllegalArgumentException("해당 메시지는 요청한 청첩장에 속하지 않습니다.");
-
-        GuestbookMessage replied = GuestbookMessage.builder()
-            .messageId(message.getMessageId()).mcard(message.getMcard())
-            .guestName(message.getGuestName()).content(message.getContent())
-            .isSecret(message.getIsSecret()).replyContent(requestDto.getReplyContent())
-            .repliedAt(LocalDateTime.now()).isDeleted(message.getIsDeleted()).build();
-
-        return GuestbookMessageResponseDto.from(guestbookMessageRepository.save(replied));
     }
 
     /**
@@ -137,8 +114,7 @@ public class GuestbookServiceImpl implements GuestbookService {
         GuestbookMessage deleted = GuestbookMessage.builder()
             .messageId(message.getMessageId()).mcard(message.getMcard())
             .guestName(message.getGuestName()).content(message.getContent())
-            .isSecret(message.getIsSecret()).replyContent(message.getReplyContent())
-            .repliedAt(message.getRepliedAt()).isDeleted(true).build();
+            .isSecret(message.getIsSecret()).isDeleted(true).build();
 
         guestbookMessageRepository.save(deleted);
     }

@@ -34,7 +34,8 @@ public class GalleryPhoto {
     @Column(nullable = false)
     private String imageUrl;
     
-    /** 사진 표시 순서 */
+    /** 공개용 사진 URL (Cloudflare R2 public URL) */
+    private String publicUrl;
     private Integer displayOrder;
     
     /** 갤러리 레이아웃 (grid, carousel 등) */

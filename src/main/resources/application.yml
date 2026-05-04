@@ -1,20 +1,31 @@
 spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   application:
     name: weddingInvitation-b
 
   # 기본 프로필: local (.env의 SPRING_PROFILES_ACTIVE로 오버라이드 가능)
   profiles:
-    active: local
+    active: ${SPRING_PROFILES_ACTIVE}
 
   # JPA 공통 설정 (dialect는 Hibernate 7.x 자동 감지)
   jpa:
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+    show-sql: ${SHOW_SQL} # true 또는 false
+    hibernate:
+      ddl-auto: ${DDL_AUTO} # validate, update, create, create-drop 중 선택
+
+  # Multipart 파일 업로드 크기 제한 (기본 1MB → MP3 등 대용량 파일 업로드 허용)
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
 
 server:
-  port: 8080
+  port: ${SERVER_PORT}
 
 # Kakao OAuth2
 kakao:
@@ -37,14 +48,20 @@ cloudflare:
   bucket:
     name: ${CLOUDFLARE_BUCKET_NAME}
     url: ${CLOUDFLARE_BUCKET_URL}
+  public:
+    image:
+      url: ${CLOUDFLARE_PUBLIC_URL}
+
+# Naver Maps Static API
+naver:
+  map:
+    client:
+      id: ${NAVER_MAP_CLIENT_ID}
+      secret: ${NAVER_MAP_CLIENT_SECRET}
 
 # JWT 설정
 jwt:
   secret: ${JWT_SECRET}
-
-# 앱 기본 설정
-app:
-  base-url: ${APP_BASE_URL:https://mcard.example.com}
 
 # Logging 공통
 logging:

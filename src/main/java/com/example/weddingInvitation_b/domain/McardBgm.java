@@ -28,6 +28,7 @@ public class McardBgm {
     private Mcard mcard;
     
     private String bgmUrl;
+    private String publicUrl;
     private String bgmTitle;
     
     @Builder.Default

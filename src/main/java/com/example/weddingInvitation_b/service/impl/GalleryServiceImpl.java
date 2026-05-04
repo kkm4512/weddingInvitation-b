@@ -74,6 +74,7 @@ public class GalleryServiceImpl implements GalleryService {
         GalleryPhoto photo = GalleryPhoto.builder()
             .mcard(mcard)
             .imageUrl(imageUrl)
+            .publicUrl(imageUrl)
             .displayOrder(nextOrder)
             .build();
 

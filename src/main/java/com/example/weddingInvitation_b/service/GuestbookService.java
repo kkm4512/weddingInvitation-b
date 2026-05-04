@@ -1,6 +1,5 @@
 package com.example.weddingInvitation_b.service;
 import com.example.weddingInvitation_b.dto.request.GuestbookMessageRequestDto;
-import com.example.weddingInvitation_b.dto.request.GuestbookReplyRequestDto;
 import com.example.weddingInvitation_b.dto.request.GuestbookSettingRequestDto;
 import com.example.weddingInvitation_b.dto.response.GuestbookMessageResponseDto;
 import com.example.weddingInvitation_b.dto.response.GuestbookSettingResponseDto;
@@ -11,6 +10,5 @@ public interface GuestbookService {
     GuestbookSettingResponseDto saveSetting(Long mcardId, GuestbookSettingRequestDto requestDto);
     List<GuestbookMessageResponseDto> getMessages(Long mcardId);
     GuestbookMessageResponseDto addMessage(Long mcardId, GuestbookMessageRequestDto requestDto);
-    GuestbookMessageResponseDto addReply(Long mcardId, Long messageId, GuestbookReplyRequestDto requestDto);
     void deleteMessage(Long mcardId, Long messageId);
 }

@@ -85,15 +85,6 @@ public class McardRsvpGuestbookController {
         return ApiResponse.success(guestbookService.addMessage(mcardId, requestDto));
     }
 
-    /** 방명록 메시지 답글 작성 (제작자용) */
-    @PutMapping("/{mcardId}/guestbook/{messageId}/reply")
-    public ApiResponse<GuestbookMessageResponseDto> addReply(
-            @PathVariable Long mcardId,
-            @PathVariable Long messageId,
-            @RequestBody GuestbookReplyRequestDto requestDto) {
-        return ApiResponse.success(guestbookService.addReply(mcardId, messageId, requestDto));
-    }
-
     /** 방명록 메시지 삭제 */
     @DeleteMapping("/{mcardId}/guestbook/{messageId}")
     public ApiResponse<Void> deleteGuestbookMessage(

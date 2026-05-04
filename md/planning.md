@@ -165,21 +165,30 @@
 **기능**
 - 예식장명 입력
 - 층/홀 입력
-- 주소 검색 (카카오 주소 API 또는 도로명 주소 API 연동)
-- 지도 마커 위치 직접 조정
+- 주소 검색 (카카오 키워드 검색 API 연동 — 장소명·도로명 주소·지번 주소 모두 검색 가능)
+  - 검색 결과에서 선택하면 도로명 주소, 지번 주소, 위도, 경도 자동 입력
+- 지도 이미지 미리보기 (네이버 Static Map API — 위경도 기반 PNG 이미지를 서버가 직접 반환)
 - 지도 표시 / 지도 잠금 설정
 - 약도 이미지 첨부
 - 교통수단 안내 추가 (지하철/버스/자가용 텍스트, 다중 추가 가능)
 - 교통수단 아이콘 표시 여부
 
+**외부 API 구성**
+| API | 용도 | 엔드포인트 |
+|-----|------|-----------|
+| 카카오 로컬 키워드 검색 | 장소·주소 검색 | `dapi.kakao.com/v2/local/search/keyword.json` |
+| 네이버 Static Map (`raster`) | 지도 PNG 이미지 반환 | `maps.apigw.ntruss.com/map-static/v2/raster` |
+
 **Use Case**
 | Actor | Use Case |
 |-------|----------|
-| 사용자 | 예식장 주소 검색 |
-| 사용자 | 지도 마커 위치 조정 |
+| 사용자 | 예식장명 또는 주소 키워드 검색 |
+| 시스템 | 카카오 키워드 검색 API 호출 → 주소 목록 반환 (최대 10건) |
+| 사용자 | 검색 결과에서 주소 선택 → 위도/경도 자동 입력 |
+| 시스템 | 네이버 Static Map API 호출 → PNG 지도 이미지 바이너리 반환 (편집 화면 미리보기용) |
+| 시스템 | 예식 장소 PUT 저장 시 lat/lng로 네이버 Static Map 이미지 자동 생성 → Cloudflare R2 업로드 → `map_image_url` 저장 |
 | 사용자 | 약도 이미지 업로드 |
 | 사용자 | 교통수단 안내 추가/삭제 |
-| 시스템 | 지도 렌더링 및 마커 표시 |
 
 ---
 
@@ -302,7 +311,7 @@
 |-------|----------|
 | 사용자 | 방명록 섹션 활성화 |
 | 하객 | 방명록 메시지 작성 |
-| 사용자 | 방명록 메시지 조회 / 답글 작성 |
+| 사용자 | 방명록 메시지 조회 / 삭제 |
 
 ---
 
@@ -456,5 +465,7 @@
 | `CLOUDFLARE_BUCKET_NAME` | R2 버킷명 |
 | `CLOUDFLARE_BUCKET_URL` | R2 퍼블릭 URL |
 | `JWT_SECRET` | JWT 서명 비밀키 |
+| `NAVER_MAP_CLIENT_ID` | 네이버 클라우드 플랫폼 Maps Application Client ID |
+| `NAVER_MAP_CLIENT_SECRET` | 네이버 클라우드 플랫폼 Maps Application Client Secret |
 | `APP_BASE_URL` | 서비스 기본 URL (QR 코드 생성 등, 예: `https://mcard.example.com`) |
 | `SPRING_PROFILES_ACTIVE` | 활성 프로필 (local / dev / prd) |
