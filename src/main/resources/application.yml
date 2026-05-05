@@ -4,6 +4,11 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 3
+      maximum-pool-size: 15      # 프리티어 max_connections(25) 초과 방지
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
 
   application:
     name: weddingInvitation-b
