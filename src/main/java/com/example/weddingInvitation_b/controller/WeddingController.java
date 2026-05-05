@@ -1,6 +1,9 @@
 package com.example.weddingInvitation_b.controller;
 
 import com.example.weddingInvitation_b.dto.response.*;
+import com.example.weddingInvitation_b.service.McardPhotoQuoteService;
+import com.example.weddingInvitation_b.service.McardBgmService;
+import com.example.weddingInvitation_b.service.McardNoticeService;
 import com.example.weddingInvitation_b.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +41,9 @@ public class WeddingController {
     private final RsvpService rsvpService;
     private final GuestbookService guestbookService;
     private final McardWreathService mcardWreathService;
+    private final McardPhotoQuoteService mcardPhotoQuoteService;
+    private final McardBgmService mcardBgmService;
+    private final McardNoticeService mcardNoticeService;
 
     /**
      * 초대 코드로 공개 청첩장 조회 (하객 뷰)
@@ -67,6 +73,9 @@ public class WeddingController {
         response.put("quote", safe(() -> mcardQuoteService.getQuote(mcardId)));
         response.put("video", safe(() -> mcardVideoService.getVideo(mcardId)));
         response.put("wreath", safe(() -> mcardWreathService.getWreath(mcardId)));
+        response.put("photoQuote", safe(() -> mcardPhotoQuoteService.getPhotoQuote(mcardId)));
+        response.put("bgm", safe(() -> mcardBgmService.getBgm(mcardId)));
+        response.put("notices", safe(() -> mcardNoticeService.getNotices(mcardId)));
         response.put("gallery", getGalleryImages(mcardId));
         response.put("accounts", safe(() -> bankAccountService.getAccounts(mcardId)));
         response.put("contacts", safe(() -> mcardContactService.getContacts(mcardId)));

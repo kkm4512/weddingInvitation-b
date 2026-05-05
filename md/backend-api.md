@@ -1,376 +1,304 @@
-# 모바일 청첩장 서비스 - 백엔드 API 명세
+# 모바일 청첩장 서비스 - 백엔드 API 목록
 
 > 기준: React(Frontend) ↔ Spring Boot(Backend) RESTful API  
-> 인증: 카카오 OAuth 2.0 소셜 로그인 + 자체 JWT (Authorization: Bearer)  
-> Base URL: `/api/v1`
+> 인증: 카카오 OAuth 2.0 소셜 로그인 + 자체 JWT (`Authorization: Bearer {accessToken}`)  
+> Base URL: `/api/v1`  
+> 요청/응답 예시는 `api-spec.md` 참고
+
+---
+
+## 인증 정책
+
+| 구분 | 설명 |
+|------|------|
+| JWT 필요 | 대부분의 편집/조회 API |
+| 인증 불필요 (permitAll) | 하객 공개 뷰 (`/w/{inviteCode}`), RSVP 제출, 방명록 작성/조회 |
+| 인증 불필요 (정적 목록) | `/intros`, `/themes`, `/themes/**`, `/greetings/samples`, `/quotes/samples`, `/notices/samples`, `/bgm/samples` |
+
+JWT 스펙: HS256 알고리즘, payload에 `userId` 포함, 만료 7일. 카카오 OAuth 2.0 로그인 성공 시 서버가 자체 JWT를 생성하여 `{ userId, accessToken }` JSON으로 응답.
 
 ---
 
 ## 1. 인증 (Authentication)
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/auth/kakao` | 카카오 OAuth 로그인 시작 |
-| GET | `/auth/kakao/callback` | 카카오 OAuth 콜백 처리 및 JWT 발급 ({ userId, accessToken } JSON 반환) |
-| GET | `/auth/me` | 현재 로그인 사용자 정보 조회 |
-| GET | `/auth/test-login/{userId}` | **[개발 전용]** userId로 바로 JWT 발급 (카카오 없이 테스트용) |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/auth/kakao` | 불필요 | 카카오 OAuth 로그인 시작 — 카카오 인증 URL 반환 |
+| GET | `/auth/kakao/callback` | 불필요 | 카카오 OAuth 콜백 처리 및 자체 JWT 발급 |
+| GET | `/auth/me` | 필요 | 현재 로그인 사용자 정보 조회 |
+| GET | `/auth/test-login/{userId}` | 불필요 | **[개발 전용]** userId로 바로 JWT 발급 (카카오 없이 테스트용) |
 
 ---
 
 ## 2. 청첩장 (MCard) CRUD
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards` | 내 청첩장 목록 조회 |
-| POST | `/mcards` | 청첩장 신규 생성 |
-| GET | `/mcards/{mcardId}` | 청첩장 단건 조회 (편집용) |
-| PUT | `/mcards/{mcardId}` | 청첩장 전체 저장 (편집 내용 저장) |
-| DELETE | `/mcards/{mcardId}` | 청첩장 삭제 |
-| GET | `/mcards/{mcardId}/preview` | 청첩장 미리보기 데이터 조회 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards` | 필요 | 내 청첩장 목록 조회 |
+| POST | `/mcards` | 필요 | 청첩장 신규 생성 |
+| GET | `/mcards/{mcardId}` | 필요 | 청첩장 단건 조회 (편집용) |
+| PUT | `/mcards/{mcardId}` | 필요 | 청첩장 전체 저장 |
+| DELETE | `/mcards/{mcardId}` | 필요 | 청첩장 삭제 (soft delete) |
+| GET | `/mcards/{mcardId}/preview` | 필요 | 청첩장 미리보기 데이터 조회 |
 
 ---
 
 ## 3. 청첩장 공개 뷰 (하객용)
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/w/{inviteCode}` | 초대 코드로 공개 청첩장 조회 (하객 뷰) |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/w/{inviteCode}` | 불필요 | 초대 코드로 공개 청첩장 전체 데이터 조회 (하객 뷰) |
 
-- 응답 데이터는 `mcardId`, `title`, `inviteCode`, `hasWatermark`, `couple`, `greeting`, `schedule`, `venue`, `gallery`, `quote`, `video`, `accounts`, `contacts`, `rsvpSettings`, `guestbookSettings`, `guestbookMessages`, `wreath` 등을 포함합니다.
-- `schedule` 필드는 `weddingDate`, `weddingTime`, `showCalendar`을 함께 반환합니다.
-- `venue` 필드는 `hallName`, `lat`, `lng`, `mapImageUrl`, `transports(type, description)` 등을 포함합니다.
-  - `mapImageUrl`: PUT 저장 시 서버가 네이버 Static Map API로 자동 생성하여 Cloudflare R2에 저장한 PNG URL. 프론트엔드에서 `<img src="mapImageUrl">` 로 바로 사용한다.
+couple, greeting, schedule, venue, gallery, quote, video, accounts, contacts, rsvpSettings, guestbookSettings, guestbookMessages, wreath 등 하객 뷰에 필요한 모든 섹션 데이터를 한 번에 반환한다.
 
 ---
 
 ## 4. 테마 설정
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/themes` | 사용 가능한 테마 목록 조회 (인증 불필요) |
-| GET | `/themes/{themeId}` | 테마 상세 조회 (색상/폰트 옵션 포함, 인증 불필요) |
-| GET | `/mcards/{mcardId}/theme` | 청첩장 테마 설정 조회 |
-| PUT | `/mcards/{mcardId}/theme` | 청첩장 테마 설정 저장 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/themes` | 불필요 | 사용 가능한 테마 목록 조회 |
+| GET | `/themes/{themeId}` | 불필요 | 테마 상세 조회 (색상/폰트 옵션 포함) |
+| GET | `/mcards/{mcardId}/theme` | 필요 | 청첩장 테마 설정 조회 |
+| PUT | `/mcards/{mcardId}/theme` | 필요 | 청첩장 테마 설정 저장 |
 
 ---
 
 ## 5. 인트로 설정
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/intros` | 인트로 레이아웃 스타일 목록 조회 (인증 불필요) |
-| GET | `/mcards/{mcardId}/intro` | 청첩장 인트로 스타일 조회 |
-| PUT | `/mcards/{mcardId}/intro` | 청첩장 인트로 스타일 저장 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/intros` | 불필요 | 인트로 레이아웃 스타일 목록 조회 |
+| GET | `/mcards/{mcardId}/intro` | 필요 | 청첩장 인트로 스타일 조회 |
+| PUT | `/mcards/{mcardId}/intro` | 필요 | 청첩장 인트로 스타일 저장 |
 
 ---
 
 ## 6. 신랑·신부 정보
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/couple` | 신랑·신부 정보 조회 |
-| PUT | `/mcards/{mcardId}/couple` | 신랑·신부 정보 저장 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/couple` | 필요 | 신랑·신부 및 혼주 정보 조회 |
+| PUT | `/mcards/{mcardId}/couple` | 필요 | 신랑·신부 및 혼주 정보 저장 |
 
 ---
 
 ## 7. 모시는 글 (청첩 인사말)
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/greeting` | 인사말 조회 |
-| PUT | `/mcards/{mcardId}/greeting` | 인사말 저장 |
-| GET | `/greetings/samples` | 인사말 샘플 문구 목록 조회 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/greeting` | 필요 | 인사말 조회 |
+| PUT | `/mcards/{mcardId}/greeting` | 필요 | 인사말 저장 |
+| GET | `/greetings/samples` | 불필요 | 인사말 샘플 문구 목록 조회 |
 
 ---
 
 ## 8. 예식 일시
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/schedule` | 예식 일시 조회 |
-| PUT | `/mcards/{mcardId}/schedule` | 예식 일시 저장 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/schedule` | 필요 | 예식 일시 조회 |
+| PUT | `/mcards/{mcardId}/schedule` | 필요 | 예식 일시 저장 |
 
 ---
 
 ## 9. 예식 장소
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/venue` | 예식 장소 조회 |
-| PUT | `/mcards/{mcardId}/venue` | 예식 장소 저장 |
-| POST | `/mcards/{mcardId}/venue/transports` | 교통수단 안내 추가 |
-| PUT | `/mcards/{mcardId}/venue/transports/{transportId}` | 교통수단 안내 수정 |
-| DELETE | `/mcards/{mcardId}/venue/transports/{transportId}` | 교통수단 안내 삭제 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/venue` | 필요 | 예식 장소 조회 |
+| PUT | `/mcards/{mcardId}/venue` | 필요 | 예식 장소 저장 |
+| POST | `/mcards/{mcardId}/venue/transports` | 필요 | 교통수단 안내 추가 |
+| PUT | `/mcards/{mcardId}/venue/transports/{transportId}` | 필요 | 교통수단 안내 수정 |
+| DELETE | `/mcards/{mcardId}/venue/transports/{transportId}` | 필요 | 교통수단 안내 삭제 |
 
-**PUT `/mcards/{mcardId}/venue` 요청 필드**
-
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `venueName` | String | 예식장명 |
-| `hallName` (또는 `floorInfo`) | String | 층/홀 정보 |
-| `address` | String | 주소 |
-| `lat` (또는 `latitude`) | Double | 위도 |
-| `lng` (또는 `longitude`) | Double | 경도 |
-| `showMap` | Boolean | 지도 표시 여부 |
-| `lockMap` (또는 `mapLocked`) | Boolean | 지도 잠금 여부 |
-| `showTransportIcons` | Boolean | 교통수단 아이콘 표시 여부 |
-
-> `mapImageUrl`은 클라이언트가 전송하지 않는다. `lat`/`lng`가 있으면 서버가 자동으로 네이버 Static Map API를 호출하여 PNG 이미지를 생성하고 Cloudflare R2에 업로드한 뒤 `map_image_url` 컬럼에 저장한다. 생성에 실패하더라도 venue 저장 자체는 성공한다 (기존 URL 유지, 오류는 로그에만 기록).
+> `mapImageUrl`은 클라이언트가 전송하지 않는다. `lat`/`lng`가 있으면 서버가 자동으로 네이버 Static Map API를 호출해 PNG 이미지를 생성하고 Cloudflare R2에 저장한다. 생성에 실패하더라도 venue 저장 자체는 성공한다 (기존 URL 유지, 오류는 로그에만 기록).
 
 ---
 
 ## 9-1. 주소 검색 및 지도 이미지 (카카오/네이버 Maps API 연동)
 
-예식 장소 편집 화면에서 주소 자동완성과 지도 이미지 미리보기를 지원하기 위한 외부 API 연동 엔드포인트.
+예식 장소 편집 화면의 주소 자동완성과 지도 이미지 미리보기를 위한 엔드포인트.
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/address/search?query={키워드}` | 카카오 키워드 검색 API — 장소명·도로명·지번 주소 모두 검색 가능 (최대 10건) |
-| GET | `/address/map?lat={위도}&lng={경도}&width={px}&height={px}` | 네이버 Static Map API — 위경도 기반 PNG 지도 이미지 바이너리 직접 반환 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/address/search?query={키워드}` | 필요 | 카카오 키워드 검색 — 장소명·도로명·지번 주소 검색 (최대 10건) |
+| GET | `/address/map?lat={위도}&lng={경도}&width={px}&height={px}` | 필요 | 네이버 Static Map — 위경도 기반 PNG 이미지 바이너리 직접 반환 |
 
-**`/address/search` 응답 예시**
-```json
-{
-  "code": 200,
-  "message": "Success",
-  "datas": {
-    "addresses": [
-      {
-        "placeName": "역삼역 2호선",
-        "addressName": "서울 강남구 강남대로 396",
-        "roadAddress": "서울 강남구 강남대로 396",
-        "jibunAddress": "서울 강남구 역삼동 678",
-        "latitude": 37.4977,
-        "longitude": 127.0279
-      }
-    ]
-  }
-}
-```
-
-> 검색 결과를 클릭하면 `venueName`, `address`, `lat`, `lng` 필드가 자동 입력된다.
-
-**`/address/map` 응답**
-
-- Content-Type: `image/png`
-- Body: PNG 이미지 바이너리 (네이버 Static Map API에서 수신한 그대로 프론트로 전달)
-- 기본 크기: `width=400`, `height=300` (쿼리 파라미터로 변경 가능)
-- 마커: 지정 좌표에 자동 표시
-
-```
-GET /api/v1/address/map?lat=37.4977&lng=127.0279&width=400&height=300
-→ HTTP 200 image/png (이미지 바이너리)
-```
-
-> - 네이버 Static Map `raster` 엔드포인트는 서버사이드 호출용으로 PNG를 직접 반환한다.
-> - 인증 헤더: `x-ncp-apigw-api-key-id` / `x-ncp-apigw-api-key` (Referer 헤더 불필요)
-> - URI는 `java.net.URI` 5-arg 생성자로 빌드하여 Spring `UriComponentsBuilder` 파싱을 우회한다 — `|` → `%7C`, 공백 → `%20` 인코딩 보장
-> - 두 엔드포인트 모두 JWT 인증 필요 (편집자 전용)
+- `/address/map`은 `Content-Type: image/png`로 바이너리를 직접 반환한다 (JSON 래퍼 없음). 기본 크기 `width=400`, `height=300`.
+- 네이버 Static Map URI는 `java.net.URI` 5-arg 생성자로 빌드 (`|` → `%7C` 인코딩 보장, UriComponentsBuilder 우회).
 
 ---
 
 ## 10. 갤러리
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/gallery` | 갤러리 사진 목록 조회 |
-| POST | `/mcards/{mcardId}/gallery` | 사진 업로드 |
-| PUT | `/mcards/{mcardId}/gallery/order` | 사진 순서 변경 |
-| DELETE | `/mcards/{mcardId}/gallery/{photoId}` | 사진 삭제 |
-| PUT | `/mcards/{mcardId}/gallery/layout` | 갤러리 레이아웃 설정 저장 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/gallery` | 필요 | 갤러리 사진 목록 조회 |
+| POST | `/mcards/{mcardId}/gallery` | 필요 | 사진 업로드 (multipart/form-data) |
+| PUT | `/mcards/{mcardId}/gallery/order` | 필요 | 사진 순서 변경 |
+| DELETE | `/mcards/{mcardId}/gallery/{photoId}` | 필요 | 사진 삭제 |
+| PUT | `/mcards/{mcardId}/gallery/layout` | 필요 | 갤러리 레이아웃 설정 저장 |
 
 ---
 
 ## 11. 연락하기
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/contacts` | 연락처 정보 조회 |
-| PUT | `/mcards/{mcardId}/contacts` | 연락처 정보 저장 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/contacts` | 필요 | 연락처 정보 조회 |
+| PUT | `/mcards/{mcardId}/contacts` | 필요 | 연락처 정보 저장 |
 
 ---
 
 ## 12. 계좌번호
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/accounts` | 계좌 목록 조회 |
-| POST | `/mcards/{mcardId}/accounts` | 계좌 추가 |
-| PUT | `/mcards/{mcardId}/accounts/{accountId}` | 계좌 수정 |
-| DELETE | `/mcards/{mcardId}/accounts/{accountId}` | 계좌 삭제 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/accounts` | 필요 | 계좌 목록 조회 |
+| POST | `/mcards/{mcardId}/accounts` | 필요 | 계좌 추가 |
+| PUT | `/mcards/{mcardId}/accounts/{accountId}` | 필요 | 계좌 수정 |
+| DELETE | `/mcards/{mcardId}/accounts/{accountId}` | 필요 | 계좌 삭제 |
 
 ---
 
 ## 13. 동영상
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/video` | 동영상 정보 조회 |
-| PUT | `/mcards/{mcardId}/video` | 동영상 URL 및 제목 저장 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/video` | 필요 | 동영상 정보 조회 |
+| PUT | `/mcards/{mcardId}/video` | 필요 | 동영상 URL 및 제목 저장 |
 
 ---
 
 ## 14. 배경음악
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/bgm` | 배경음악 설정 조회 |
-| PUT | `/mcards/{mcardId}/bgm` | 배경음악 설정 저장 |
-| POST | `/mcards/{mcardId}/bgm/upload` | 배경음악 파일 업로드 |
-| GET | `/bgm/samples` | 샘플 음악 목록 조회 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/bgm` | 필요 | 배경음악 설정 조회 |
+| PUT | `/mcards/{mcardId}/bgm` | 필요 | 배경음악 설정 저장 |
+| POST | `/mcards/{mcardId}/bgm/upload` | 필요 | 배경음악 파일 업로드 (multipart/form-data) |
+| GET | `/bgm/samples` | 불필요 | 샘플 음악 목록 조회 |
 
 ---
 
 ## 15. 안내사항
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/notices` | 안내사항 목록 조회 |
-| POST | `/mcards/{mcardId}/notices` | 안내사항 추가 |
-| PUT | `/mcards/{mcardId}/notices/{noticeId}` | 안내사항 수정 |
-| DELETE | `/mcards/{mcardId}/notices/{noticeId}` | 안내사항 삭제 |
-| GET | `/notices/samples` | 안내사항 샘플 문구 목록 조회 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/notices` | 필요 | 안내사항 목록 조회 |
+| POST | `/mcards/{mcardId}/notices` | 필요 | 안내사항 추가 |
+| PUT | `/mcards/{mcardId}/notices/{noticeId}` | 필요 | 안내사항 수정 |
+| DELETE | `/mcards/{mcardId}/notices/{noticeId}` | 필요 | 안내사항 삭제 |
+| GET | `/notices/samples` | 불필요 | 안내사항 샘플 문구 목록 조회 |
 
 ---
 
 ## 16. 참석의사 (RSVP)
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/rsvp/settings` | RSVP 설정 조회 |
-| PUT | `/mcards/{mcardId}/rsvp/settings` | RSVP 활성/비활성 설정 저장 |
-| POST | `/mcards/{mcardId}/rsvp` | 하객 참석의사 응답 제출 |
-| GET | `/mcards/{mcardId}/rsvp` | RSVP 응답 목록 조회 (제작자용) |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/rsvp/settings` | 필요 | RSVP 설정 조회 |
+| PUT | `/mcards/{mcardId}/rsvp/settings` | 필요 | RSVP 활성/비활성 설정 저장 |
+| POST | `/mcards/{mcardId}/rsvp` | 불필요 | 하객 참석의사 응답 제출 |
+| GET | `/mcards/{mcardId}/rsvp` | 필요 | RSVP 응답 목록 조회 (제작자 전용) |
 
 ---
 
 ## 17. 방명록
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/guestbook/settings` | 방명록 설정 조회 |
-| PUT | `/mcards/{mcardId}/guestbook/settings` | 방명록 활성/비활성 설정 저장 |
-| GET | `/mcards/{mcardId}/guestbook` | 방명록 메시지 목록 조회 |
-| POST | `/mcards/{mcardId}/guestbook` | 하객 방명록 메시지 작성 |
-| DELETE | `/mcards/{mcardId}/guestbook/{messageId}` | 방명록 메시지 삭제 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/guestbook/settings` | 필요 | 방명록 설정 조회 |
+| PUT | `/mcards/{mcardId}/guestbook/settings` | 필요 | 방명록 활성/비활성 설정 저장 |
+| GET | `/mcards/{mcardId}/guestbook` | 불필요 | 방명록 메시지 목록 조회 |
+| POST | `/mcards/{mcardId}/guestbook` | 불필요 | 하객 방명록 메시지 작성 |
+| DELETE | `/mcards/{mcardId}/guestbook/{messageId}` | 필요 | 방명록 메시지 삭제 (제작자 전용) |
 
 ---
 
 ## 18. 화환 보내기
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/wreath` | 화환 URL 설정 조회 |
-| PUT | `/mcards/{mcardId}/wreath` | 화환 URL 설정 저장 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/wreath` | 필요 | 화환 URL 설정 조회 |
+| PUT | `/mcards/{mcardId}/wreath` | 필요 | 화환 URL 설정 저장 |
 
 ---
 
 ## 19. 글귀
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/quote` | 글귀 조회 |
-| PUT | `/mcards/{mcardId}/quote` | 글귀 저장 |
-| GET | `/quotes/samples` | 글귀 샘플 문구 목록 조회 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/quote` | 필요 | 글귀 조회 |
+| PUT | `/mcards/{mcardId}/quote` | 필요 | 글귀 저장 |
+| GET | `/quotes/samples` | 불필요 | 글귀 샘플 문구 목록 조회 |
 
 ---
 
 ## 20. 사진 & 글귀
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/photo-quote` | 사진+글귀 블록 조회 |
-| PUT | `/mcards/{mcardId}/photo-quote` | 사진+글귀 블록 저장 |
-| POST | `/mcards/{mcardId}/photo-quote/upload` | 사진+글귀 이미지 업로드 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/photo-quote` | 필요 | 사진+글귀 블록 조회 |
+| PUT | `/mcards/{mcardId}/photo-quote` | 필요 | 사진+글귀 블록 저장 |
+| POST | `/mcards/{mcardId}/photo-quote/upload` | 필요 | 사진+글귀 이미지 업로드 (multipart/form-data) |
 
 ---
 
 ## 21. 공유 썸네일
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/thumbnail` | 공유 썸네일 설정 조회 |
-| PUT | `/mcards/{mcardId}/thumbnail` | 공유 썸네일 설정 저장 |
-| POST | `/mcards/{mcardId}/thumbnail/upload?type={type}` | 썸네일 이미지 업로드 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/thumbnail` | 필요 | 공유 썸네일 설정 조회 |
+| PUT | `/mcards/{mcardId}/thumbnail` | 필요 | 공유 썸네일 설정 저장 |
+| POST | `/mcards/{mcardId}/thumbnail/upload?type={type}` | 필요 | 썸네일 이미지 업로드 (multipart/form-data) |
 
-> - `type` 파라미터: `kakao` (카카오톡 공유용) 또는 `url` (URL 공유용, 기본값)
+> `type` 파라미터: `kakao` (카카오톡 공유용) 또는 `url` (URL 공유용, 기본값)
 
 ---
 
 ## 22. 메뉴 순서
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/sections/order` | 섹션 노출 순서 조회 |
-| PUT | `/mcards/{mcardId}/sections/order` | 섹션 노출 순서 저장 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/sections/order` | 필요 | 섹션 노출 순서 조회 |
+| PUT | `/mcards/{mcardId}/sections/order` | 필요 | 섹션 노출 순서 저장 |
 
 ---
 
 ## 23. QR 코드
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/mcards/{mcardId}/qrcode` | QR 코드 이미지 생성 및 반환 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/mcards/{mcardId}/qrcode` | 필요 | QR 코드 이미지 생성 및 반환 |
+
+> `Content-Type: image/png`, `Content-Disposition: attachment`로 바이너리를 직접 반환한다 (JSON 래퍼 없음).
 
 ---
 
 ## 24. 파일 업로드 (공통)
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| POST | `/files/upload?folder={folder}` | 이미지/파일 업로드 (multipart/form-data, Cloudflare R2 저장 후 URL 반환) |
-| DELETE | `/files?fileUrl={fileUrl}` | 업로드 파일 삭제 |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| POST | `/files/upload?folder={folder}` | 필요 | 이미지/파일 업로드 — Cloudflare R2 저장 후 URL 반환 |
+| DELETE | `/files?fileUrl={fileUrl}` | 필요 | 업로드 파일 삭제 |
 
-> - `folder` 파라미터: 저장 경로 구분용 (예: `gallery`, `bgm`, `photo-quote`, `thumbnail`, `test`)
-> - 요청 필드: `file` (multipart/form-data)
-> - 응답: `{ fileUrl: "https://..." }`
+> `folder` 파라미터: `gallery` / `bgm` / `photo-quote` / `thumbnail` / `test`. 요청 필드명: `file` (multipart/form-data).
 
 ---
 
 ## 25. 헬스 체크
 
-| 메서드 | 엔드포인트 | 설명 |
-|--------|-----------|------|
-| GET | `/health` | 서버 상태 확인 (인증 불필요, Docker/Nginx/CI-CD 공통 사용) |
+| 메서드 | 엔드포인트 | 인증 | 설명 |
+|--------|-----------|------|------|
+| GET | `/health` | 불필요 | 서버 상태 확인 — Docker/Nginx/CI-CD 공통 사용 |
 
-**응답 예시 (정상)**
-```json
-{
-  "success": true,
-  "data": {
-    "status": "UP",
-    "timestamp": "2026-05-03T14:30:00",
-    "service": "wedding-invitation-backend",
-    "version": "1.0.0"
-  }
-}
-```
+> `serverIp`, `hostname` 필드를 포함하므로 로드밸런서 분산 검증에 활용할 수 있다.
 
 ---
 
-## API 설계 참고사항
-
-- 모든 인증 필요 API는 **JWT 기반**으로 처리한다
-  - 카카오 OAuth 2.0 로그인 성공 시 서버가 자체 JWT를 생성하여 `{ userId, accessToken }` JSON으로 응답
-  - 이후 모든 요청에서 클라이언트가 `Authorization: Bearer {accessToken}` 헤더를 포함하고, 서버의 JWT Filter가 서명 검증 후 SecurityContext에 userId 저장
-  - JWT 스펙: HS256 알고리즘, payload에 `userId` 포함, 만료 7일
-- 하객용 API (`/w/{inviteCode}`, RSVP 제출, 방명록 작성 등)는 **인증 불필요 (permitAll)**
-- 정적 목록 API (`/intros`, `/themes`, `/themes/**`, `/greetings/samples`, `/quotes/samples`, `/notices/samples`, `/bgm/samples`)는 **인증 불필요 (permitAll)**
-- 파일 업로드는 **Cloudflare R2 (S3 호환)** 에 저장되며, 환경변수로 설정한다
-- QR 코드 API (`/mcards/{mcardId}/qrcode`)는 `image/png` 바이너리를 직접 반환한다 (Content-Disposition: attachment)
-- 모든 JSON API 응답은 공통 래퍼로 감싼다: `{ code, message, datas }`
-
-### 공통 응답 형식
-
-```json
-{
-  "code": "SUCCESS",
-  "message": "요청이 성공적으로 처리되었습니다.",
-  "datas": { ... }
-}
-```
-
-### 환경 변수 목록
+## 환경 변수 목록
 
 | 변수명 | 설명 |
 |--------|------|
@@ -381,7 +309,7 @@ GET /api/v1/address/map?lat=37.4977&lng=127.0279&width=400&height=300
 | `CLOUDFLARE_ACCESS_KEY_ID` | R2 액세스 키 |
 | `CLOUDFLARE_SECRET_ACCESS_KEY` | R2 시크릿 키 |
 | `CLOUDFLARE_BUCKET_NAME` | R2 버킷명 |
-| `CLOUDFLARE_BUCKET_URL` | R2 퍼블릭 URL (https://...) |
+| `CLOUDFLARE_BUCKET_URL` | R2 퍼블릭 URL (`https://...`) |
 | `JWT_SECRET` | JWT 서명 비밀키 |
 | `NAVER_MAP_CLIENT_ID` | 네이버 클라우드 플랫폼 Maps Application Client ID |
 | `NAVER_MAP_CLIENT_SECRET` | 네이버 클라우드 플랫폼 Maps Application Client Secret |

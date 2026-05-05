@@ -6,11 +6,15 @@ import com.example.weddingInvitation_b.dto.response.LoginResponseDto;
 import com.example.weddingInvitation_b.dto.response.UserResponseDto;
 import com.example.weddingInvitation_b.service.AuthService;
 import com.example.weddingInvitation_b.util.JwtProvider;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 import java.util.Map;
 
@@ -45,6 +49,9 @@ public class AuthController {
     private final AuthService authService;
     private final KakaoOAuthClient kakaoOAuthClient;
     private final JwtProvider jwtProvider;
+
+    @Value("${app.url}")
+    private String appUrl;
 
     /**
      * 카카오 OAuth 로그인 URL 반환
@@ -82,17 +89,25 @@ public class AuthController {
      * @return userId + accessToken
      */
     @GetMapping("/kakao/callback")
-    public ApiResponse<LoginResponseDto> kakaoCallback(@RequestParam String code) {
-        // 1. 인가 코드로 로그인 처리 (토큰 교환 -> 사용자 조회/생성)
-        UserResponseDto user = authService.loginWithKakao(code);
+    public void kakaoCallback(@RequestParam String code, HttpServletResponse response) throws IOException {
+        try {
+            // 1. 인가 코드로 로그인 처리 (토큰 교환 -> 사용자 조회/생성)
+            UserResponseDto user = authService.loginWithKakao(code);
 
-        log.debug("kakao login success - userId: {}", user.getUserId());
+            log.debug("kakao login success - userId: {}", user.getUserId());
 
-        // 2. 자체 JWT 생성 (HS256, userId payload, 7일 만료)
-        String jwt = jwtProvider.generateToken(user.getUserId());
+            // 2. 자체 JWT 생성 (HS256, userId payload, 7일 만료)
+            String jwt = jwtProvider.generateToken(user.getUserId());
 
-        // 3. userId + accessToken 반환
-        return ApiResponse.success(LoginResponseDto.of(user.getUserId(), jwt));
+            // 3. 프론트엔드 콜백 페이지로 redirect (token을 쿼리 파라미터로 전달)
+            String redirectUrl = appUrl + "/auth/kakao/callback"
+                + "?accessToken=" + jwt
+                + "&userId=" + user.getUserId();
+            response.sendRedirect(redirectUrl);
+        } catch (Exception e) {
+            log.error("kakao login failed", e);
+            response.sendRedirect(appUrl + "/login?error=kakao");
+        }
     }
 
     /**

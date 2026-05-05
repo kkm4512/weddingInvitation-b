@@ -68,3 +68,7 @@ logging:
   level:
     root: INFO
     com.example.weddingInvitation_b: DEBUG
+
+# APP 설정
+app:
+  url: ${APP_URL}
