@@ -170,7 +170,7 @@ public class McardVenueServiceImpl implements McardVenueService {
 
         int nextOrder = requestDto.getDisplayOrder() != null
             ? requestDto.getDisplayOrder()
-            : venueTransportRepository.findByVenueVenueIdOrderByDisplayOrderAsc(venue.getVenueId()).size() + 1;
+            : venueTransportRepository.findMaxDisplayOrderByVenueId(venue.getVenueId()).map(max -> max + 1).orElse(1);
 
         VenueTransport transport = VenueTransport.builder()
             .venue(venue).transportType(requestDto.getTransportType())

@@ -39,3 +39,6 @@ out/
 ### env ###
 .env
 envs
+
+### 문서 ###
+document

@@ -43,7 +43,7 @@ public class McardNoticeServiceImpl implements McardNoticeService {
 
         int nextOrder = requestDto.getDisplayOrder() != null
             ? requestDto.getDisplayOrder()
-            : mcardNoticeRepository.findByMcardMcardIdOrderByDisplayOrderAsc(mcardId).size() + 1;
+            : mcardNoticeRepository.findMaxDisplayOrderByMcardId(mcardId).map(max -> max + 1).orElse(1);
 
         McardNotice notice = McardNotice.builder()
             .mcard(mcard).title(requestDto.getTitle()).content(requestDto.getContent())

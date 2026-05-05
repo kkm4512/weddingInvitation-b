@@ -55,9 +55,12 @@ public class McardGalleryController {
     /**
      * 갤러리 사진 순서 변경
      *
+     * <p>각 사진의 photoId와 displayOrder를 명시적으로 지정하여 순서를 변경한다.
+     * displayOrder는 중복 없이 지정해야 한다.</p>
+     *
      * @param mcardId    청첩장 ID
-     * @param requestDto 새 순서의 photoId 목록
-     * @return 순서 변경된 사진 목록
+     * @param requestDto photoId + displayOrder 쌍 목록
+     * @return 순서 변경된 사진 목록 (displayOrder 오름차순)
      */
     @PutMapping("/{mcardId}/gallery/order")
     public ApiResponse<List<GalleryPhotoResponseDto>> updateOrder(

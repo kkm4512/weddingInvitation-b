@@ -3,12 +3,15 @@ package com.example.weddingInvitation_b.controller;
 import com.example.weddingInvitation_b.dto.request.McardCreateRequestDto;
 import com.example.weddingInvitation_b.dto.request.McardCoupleRequestDto;
 import com.example.weddingInvitation_b.dto.request.McardScheduleRequestDto;
+import com.example.weddingInvitation_b.dto.request.McardSectionOrderRequestDto;
 import com.example.weddingInvitation_b.dto.response.ApiResponse;
 import com.example.weddingInvitation_b.dto.response.McardCoupleResponseDto;
 import com.example.weddingInvitation_b.dto.response.McardResponseDto;
 import com.example.weddingInvitation_b.dto.response.McardScheduleResponseDto;
+import com.example.weddingInvitation_b.dto.response.McardSectionOrderResponseDto;
 import com.example.weddingInvitation_b.service.McardCoupleService;
 import com.example.weddingInvitation_b.service.McardScheduleService;
+import com.example.weddingInvitation_b.service.McardSectionOrderService;
 import com.example.weddingInvitation_b.service.McardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -35,6 +38,7 @@ public class McardController {
     private final McardService mcardService;
     private final McardCoupleService mcardCoupleService;
     private final McardScheduleService mcardScheduleService;
+    private final McardSectionOrderService mcardSectionOrderService;
 
     // ─────────────────────────────────────────────────────────────
     // 청첩장 CRUD
@@ -169,6 +173,35 @@ public class McardController {
             @PathVariable Long mcardId,
             @RequestBody McardScheduleRequestDto requestDto) {
         return ApiResponse.success(mcardScheduleService.saveSchedule(mcardId, requestDto));
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 섹션 순서
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * 섹션 순서 조회
+     *
+     * @param mcardId 청첩장 ID
+     * @return 섹션 순서 정보
+     */
+    @GetMapping("/{mcardId}/section-order")
+    public ApiResponse<McardSectionOrderResponseDto> getSectionOrder(@PathVariable Long mcardId) {
+        return ApiResponse.success(mcardSectionOrderService.getSectionOrder(mcardId));
+    }
+
+    /**
+     * 섹션 순서 저장
+     *
+     * @param mcardId    청첩장 ID
+     * @param requestDto 저장할 섹션 순서 정보
+     * @return 저장된 섹션 순서 정보
+     */
+    @PutMapping("/{mcardId}/section-order")
+    public ApiResponse<McardSectionOrderResponseDto> saveSectionOrder(
+            @PathVariable Long mcardId,
+            @RequestBody McardSectionOrderRequestDto requestDto) {
+        return ApiResponse.success(mcardSectionOrderService.saveSectionOrder(mcardId, requestDto));
     }
 
     // ─────────────────────────────────────────────────────────────

@@ -43,7 +43,7 @@ public class BankAccountServiceImpl implements BankAccountService {
 
         int nextOrder = requestDto.getDisplayOrder() != null
             ? requestDto.getDisplayOrder()
-            : bankAccountRepository.findByMcardMcardIdOrderByDisplayOrderAsc(mcardId).size() + 1;
+            : bankAccountRepository.findMaxDisplayOrderByMcardId(mcardId).map(max -> max + 1).orElse(1);
 
         BankAccount account = BankAccount.builder()
             .mcard(mcard).accountType(requestDto.getAccountType())

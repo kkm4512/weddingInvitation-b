@@ -4,6 +4,7 @@ import com.example.weddingInvitation_b.dto.response.*;
 import com.example.weddingInvitation_b.service.McardPhotoQuoteService;
 import com.example.weddingInvitation_b.service.McardBgmService;
 import com.example.weddingInvitation_b.service.McardNoticeService;
+import com.example.weddingInvitation_b.service.McardSectionOrderService;
 import com.example.weddingInvitation_b.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -44,6 +45,7 @@ public class WeddingController {
     private final McardPhotoQuoteService mcardPhotoQuoteService;
     private final McardBgmService mcardBgmService;
     private final McardNoticeService mcardNoticeService;
+    private final McardSectionOrderService mcardSectionOrderService;
 
     /**
      * 초대 코드로 공개 청첩장 조회 (하객 뷰)
@@ -51,21 +53,15 @@ public class WeddingController {
      * <p>인증 없이 접근 가능하다. inviteCode에 해당하는 청첩장 전체 데이터를 반환한다.</p>
      *
      * @param inviteCode 청첩장 초대 코드 (공개 URL)
-     * @return 청첩장 공개 데이터
+     * @return 청첩장 공개 데이터 (섹션 순서 적용)
      */
     @GetMapping("/{inviteCode}")
     public ApiResponse<Map<String, Object>> getPublicMcard(@PathVariable String inviteCode) {
         McardResponseDto mcard = mcardService.getMcardByInviteCode(inviteCode);
         Long mcardId = mcard.getMcardId();
 
+        // 모든 섹션 데이터를 미리 준비
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("mcardId", mcardId);
-        response.put("title", mcard.getTitle());
-        response.put("inviteCode", mcard.getInviteCode());
-        response.put("hasWatermark", mcard.getHasWatermark());
-        response.put("createdAt", mcard.getCreatedAt());
-        response.put("updatedAt", mcard.getUpdatedAt());
-
         response.put("couple", safe(() -> mcardCoupleService.getCouple(mcardId)));
         response.put("greeting", safe(() -> mcardGreetingService.getGreeting(mcardId)));
         response.put("schedule", translateSchedule(safe(() -> mcardScheduleService.getSchedule(mcardId))));
@@ -82,7 +78,19 @@ public class WeddingController {
         response.put("rsvpSettings", safe(() -> rsvpService.getSetting(mcardId)));
         response.put("guestbookSettings", safe(() -> guestbookService.getSetting(mcardId)));
         response.put("guestbookMessages", safe(() -> guestbookService.getMessages(mcardId)));
+        response.put("mcardId", mcardId);
+        response.put("title", mcard.getTitle());
+        response.put("inviteCode", mcard.getInviteCode());
+        response.put("hasWatermark", mcard.getHasWatermark());
+        response.put("createdAt", mcard.getCreatedAt());
+        response.put("updatedAt", mcard.getUpdatedAt());
 
+        // 섹션 순서 가져오기 (저장된 순서가 없으면 기본값 사용)
+        McardSectionOrderResponseDto sectionOrderDto = mcardSectionOrderService.getSectionOrder(mcardId);
+        List<String> sectionOrder = sectionOrderDto.getSectionOrder();
+
+        // 섹션 순서를 응답에 포함 (프론트에서 렌더링 순서로 사용)
+        response.put("sectionOrder", sectionOrder);
         return ApiResponse.success(response);
     }
 

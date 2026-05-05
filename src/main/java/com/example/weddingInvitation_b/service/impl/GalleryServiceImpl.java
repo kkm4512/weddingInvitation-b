@@ -17,6 +17,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 /**
@@ -84,33 +86,55 @@ public class GalleryServiceImpl implements GalleryService {
     /**
      * 갤러리 사진 순서 변경
      *
-     * <p>요청한 photoId 순서대로 displayOrder를 1부터 재부여한다.</p>
+     * <p>요청 목록의 각 항목에 명시된 {@code displayOrder} 값을 그대로 적용한다.
+     * displayOrder 중복 시 {@link IllegalArgumentException}을 던진다.</p>
      *
      * @param mcardId    청첩장 ID
-     * @param requestDto 새 순서의 photoId 목록
-     * @return 순서 변경된 사진 목록
+     * @param requestDto photoId + displayOrder 쌍 목록
+     * @return 순서 변경된 사진 목록 (displayOrder 오름차순)
+     * @throws IllegalArgumentException displayOrder 중복, 또는 해당 청첩장 소속이 아닌 사진 포함 시
+     * @throws EntityNotFoundException  사진 ID가 존재하지 않을 경우
      */
     @Override
     @Transactional
     public List<GalleryPhotoResponseDto> updateOrder(Long mcardId, GalleryPhotoOrderRequestDto requestDto) {
-        List<GalleryPhotoResponseDto> result = new ArrayList<>();
-        List<Long> photoIds = requestDto.getPhotoIds();
+        List<GalleryPhotoOrderRequestDto.PhotoOrderItem> items = requestDto.getPhotos();
 
-        for (int i = 0; i < photoIds.size(); i++) {
-            GalleryPhoto photo = galleryPhotoRepository.findById(photoIds.get(i))
-                .orElseThrow(() -> new EntityNotFoundException("사진을 찾을 수 없습니다."));
+        // displayOrder 중복 검증
+        Set<Integer> orderSet = new HashSet<>();
+        for (GalleryPhotoOrderRequestDto.PhotoOrderItem item : items) {
+            if (!orderSet.add(item.getDisplayOrder())) {
+                throw new IllegalArgumentException(
+                    "displayOrder 값이 중복되었습니다: " + item.getDisplayOrder());
+            }
+        }
+
+        List<GalleryPhotoResponseDto> result = new ArrayList<>();
+
+        for (GalleryPhotoOrderRequestDto.PhotoOrderItem item : items) {
+            GalleryPhoto photo = galleryPhotoRepository.findById(item.getPhotoId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                    "사진을 찾을 수 없습니다. photoId=" + item.getPhotoId()));
 
             if (!photo.getMcard().getMcardId().equals(mcardId)) {
-                throw new IllegalArgumentException("해당 사진은 요청한 청첩장에 속하지 않습니다.");
+                throw new IllegalArgumentException(
+                    "해당 사진은 요청한 청첩장에 속하지 않습니다. photoId=" + item.getPhotoId());
             }
 
             GalleryPhoto updated = GalleryPhoto.builder()
-                .photoId(photo.getPhotoId()).mcard(photo.getMcard())
-                .imageUrl(photo.getImageUrl()).displayOrder(i + 1)
-                .layoutType(photo.getLayoutType()).build();
+                .photoId(photo.getPhotoId())
+                .mcard(photo.getMcard())
+                .imageUrl(photo.getImageUrl())
+                .publicUrl(photo.getPublicUrl())
+                .displayOrder(item.getDisplayOrder())
+                .layoutType(photo.getLayoutType())
+                .build();
 
             result.add(GalleryPhotoResponseDto.from(galleryPhotoRepository.save(updated)));
         }
+
+        // 응답은 displayOrder 오름차순으로 정렬
+        result.sort((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()));
         return result;
     }
 
