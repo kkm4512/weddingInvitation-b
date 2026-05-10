@@ -1,6 +1,7 @@
 package com.example.weddingInvitation_b.controller;
 
 import com.example.weddingInvitation_b.dto.response.ApiResponse;
+import com.example.weddingInvitation_b.dto.response.SubwayItem;
 import com.example.weddingInvitation_b.dto.response.TransportSuggestionsResponseDto.TransportItem;
 import com.example.weddingInvitation_b.service.TransportService;
 import lombok.RequiredArgsConstructor;
@@ -32,18 +33,17 @@ public class TransportController {
     private final TransportService transportService;
 
     /**
-     * 주변 지하철역 조회
+     * 주변 지하철역 출구 조회
      *
-     * <p>예식장 좌표 기반으로 반경 내 지하철역을 조회한다.
-     * 동일 역명의 여러 출구는 가장 가까운 1건으로 중복 제거된다.</p>
+     * <p>예식장 좌표 기반으로 가장 가까운 지하철역 출구를 역별 1건씩 반환한다.</p>
      *
-     * @param lat    위도 (카카오 주소 검색 결과의 latitude)
-     * @param lng    경도 (카카오 주소 검색 결과의 longitude)
+     * @param lat    위도
+     * @param lng    경도
      * @param radius 탐색 반경 m (기본값: 1000)
-     * @return 주변 지하철역 목록 (거리 오름차순, 최대 5건)
+     * @return 주변 지하철역 출구 목록 (도보시간 오름차순, 최대 5건)
      */
     @GetMapping("/subways")
-    public ApiResponse<List<TransportItem>> getSubways(
+    public ApiResponse<List<SubwayItem>> getSubways(
             @RequestParam double lat,
             @RequestParam double lng,
             @RequestParam(defaultValue = "1000") int radius) {

@@ -86,6 +86,56 @@ public class KakaoLocalClient {
     }
 
     /**
+     * 좌표 기반 카카오 키워드 검색
+     *
+     * <p>지정한 좌표를 중심으로 반경 내에서 키워드로 장소를 검색한다.
+     * 지하철 출구 번호 확인용으로 "강남역 출구", "학동역 출구" 등 질의에 사용한다.</p>
+     *
+     * <p>카카오 좌표 파라미터 주의: x = 경도(lng), y = 위도(lat)</p>
+     *
+     * @param query  검색 키워드 (예: "학동역 출구")
+     * @param lng    중심 경도 (longitude)
+     * @param lat    중심 위도 (latitude)
+     * @param radius 탐색 반경 (m, 카카오 최대 20000)
+     * @return 카카오 키워드 검색 원시 응답
+     */
+    public KakaoAddressResponseDto searchKeywordNearby(String query, double lng, double lat, int radius) {
+        String uri = UriComponentsBuilder.fromUriString(KAKAO_KEYWORD_SEARCH_URL)
+            .queryParam("query", query)
+            .queryParam("x", lng)
+            .queryParam("y", lat)
+            .queryParam("radius", radius)
+            .queryParam("sort", "distance")
+            .queryParam("size", DEFAULT_SEARCH_SIZE)
+            .build()
+            .toUriString();
+
+        log.info("[KakaoLocalClient] 좌표 기반 키워드 검색 요청: query={}, lat={}, lng={}, radius={}",
+            query, lat, lng, radius);
+
+        try {
+            RestClient.ResponseSpec responseSpec = restClient.get()
+                .uri(uri)
+                .header("Authorization", "KakaoAK " + kakaoRestApiKey)
+                .retrieve();
+
+            KakaoAddressResponseDto response = responseSpec.body(KakaoAddressResponseDto.class);
+            if (response == null) {
+                throw new RuntimeException("카카오 키워드 검색 결과를 받지 못했습니다.");
+            }
+
+            log.info("[KakaoLocalClient] 좌표 기반 키워드 검색 완료: query={}, 결과={}건",
+                query,
+                response.getDocuments() != null ? response.getDocuments().size() : 0);
+
+            return response;
+
+        } catch (RestClientException e) {
+            throw new RuntimeException("카카오 좌표 기반 키워드 검색 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    /**
      * 좌표 기반 카카오 카테고리 검색
      *
      * <p>지정한 좌표를 중심으로 반경 내의 특정 카테고리 장소를 검색한다.
