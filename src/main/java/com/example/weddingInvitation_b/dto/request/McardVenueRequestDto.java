@@ -18,10 +18,8 @@ public class McardVenueRequestDto {
     @JsonAlias({"hallName"})
     private String floorInfo;
     private String address;
-    @JsonAlias({"lat"})
-    private Double latitude;
-    @JsonAlias({"lng"})
-    private Double longitude;
+    private Double lat;
+    private Double lng;
     private Boolean showMap;
     @JsonAlias({"lockMap"})
     private Boolean mapLocked;

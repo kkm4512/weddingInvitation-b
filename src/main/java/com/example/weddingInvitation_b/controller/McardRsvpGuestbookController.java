@@ -7,7 +7,6 @@ import com.example.weddingInvitation_b.service.RsvpService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 /**
  * 참석의사(RSVP) + 방명록 API 컨트롤러
@@ -49,10 +48,18 @@ public class McardRsvpGuestbookController {
         return ApiResponse.success(rsvpService.submitResponse(mcardId, requestDto));
     }
 
-    /** RSVP 응답 목록 조회 (제작자용) */
+    /**
+     * RSVP 응답 목록 커서 페이징 조회 (제작자용)
+     *
+     * @param cursor 직전 페이지 마지막 responseId (첫 요청 시 생략)
+     * @param size   페이지 크기 (기본값 10)
+     */
     @GetMapping("/{mcardId}/rsvp")
-    public ApiResponse<List<RsvpResponseResponseDto>> getRsvpResponses(@PathVariable Long mcardId) {
-        return ApiResponse.success(rsvpService.getResponses(mcardId));
+    public ApiResponse<CursorPageResponseDto<RsvpResponseResponseDto>> getRsvpResponses(
+            @PathVariable Long mcardId,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.success(rsvpService.getResponses(mcardId, cursor, size));
     }
 
     // ── 방명록 ─────────────────────────────────────────────────
@@ -71,10 +78,18 @@ public class McardRsvpGuestbookController {
         return ApiResponse.success(guestbookService.saveSetting(mcardId, requestDto));
     }
 
-    /** 방명록 메시지 목록 조회 */
+    /**
+     * 방명록 메시지 커서 페이징 조회
+     *
+     * @param cursor 직전 페이지 마지막 messageId (첫 요청 시 생략)
+     * @param size   페이지 크기 (기본값 10)
+     */
     @GetMapping("/{mcardId}/guestbook")
-    public ApiResponse<List<GuestbookMessageResponseDto>> getGuestbookMessages(@PathVariable Long mcardId) {
-        return ApiResponse.success(guestbookService.getMessages(mcardId));
+    public ApiResponse<CursorPageResponseDto<GuestbookMessageResponseDto>> getGuestbookMessages(
+            @PathVariable Long mcardId,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.success(guestbookService.getMessages(mcardId, cursor, size));
     }
 
     /** 하객 방명록 메시지 작성 (인증 불필요) */

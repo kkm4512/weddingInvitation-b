@@ -40,10 +40,10 @@ public class McardVenue {
     private String address;
     
     /** 위도 */
-    private Double latitude;
-    
+    private Double lat;
+
     /** 경도 */
-    private Double longitude;
+    private Double lng;
     
     /** 약도 이미지 URL */
     private String mapImageUrl;

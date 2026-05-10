@@ -453,7 +453,31 @@ com.project
 - Entity를 Controller/Service 간 직접 전달 금지 — 반드시 DTO 사용
 - DTO 내 `from(Entity)` 정적 팩토리 메서드로 변환 처리
 
-### 4-4. 네이밍 컨벤션
+### 4-4. 키워드 통일 원칙
+
+> 동일한 의미를 가진 단어는 코드베이스 전체에서 하나의 표현으로 통일한다.
+
+**규칙**
+- 같은 개념을 나타내는 변수명·필드명·파라미터명이 두 가지 이상 혼재하는 것을 금지한다.
+- 새로운 키워드를 도입하기 전에, 이미 프로젝트에서 사용 중인 단어가 있는지 먼저 확인한다.
+- 표준 약어가 존재하는 경우 풀네임 대신 약어를 사용한다.
+
+**프로젝트 적용 키워드 표**
+
+| 개념 | 사용 ✅ | 금지 ❌ |
+|------|--------|--------|
+| 위도 | `lat` | `latitude` |
+| 경도 | `lng` | `longitude`, `lon` |
+| 청첩장 ID | `mcardId` | `cardId`, `invitationId` |
+| 예식장 ID | `venueId` | `locationId`, `placeId` |
+| 교통수단 순서 | `displayOrder` | `order`, `sortOrder`, `seq` |
+
+> 새 약어/키워드가 확정되면 이 표에 반드시 추가한다.
+
+---
+
+### 4-5. 네이밍 컨벤션
+
 | 대상 | 규칙 | 예시 |
 |------|------|------|
 | 클래스 | PascalCase | `McardService`, `GalleryController` |
@@ -462,7 +486,7 @@ com.project
 | 테이블/컬럼 | snake_case | `mcard_id`, `invite_code` |
 | API 경로 | kebab-case | `/api/v1/mcards`, `/photo-quote` |
 
-### 4-5. API 응답 형식 규칙
+### 4-6. API 응답 형식 규칙
 
 모든 API는 일관된 응답 형식을 사용한다. 성공/실패 여부와 데이터를 명확히 구분하여 반환한다.
 

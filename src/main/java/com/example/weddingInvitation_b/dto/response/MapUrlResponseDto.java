@@ -27,10 +27,10 @@ public class MapUrlResponseDto {
     /**
      * 위도
      */
-    private double latitude;
+    private double lat;
 
     /**
      * 경도
      */
-    private double longitude;
+    private double lng;
 }

@@ -83,7 +83,7 @@ public class WeddingController {
         CompletableFuture<Object> contactsF     = safeAsync(() -> mcardContactService.getContacts(mcardId));
         CompletableFuture<Object> rsvpSettingF  = safeAsync(() -> rsvpService.getSetting(mcardId));
         CompletableFuture<Object> gbSettingF    = safeAsync(() -> guestbookService.getSetting(mcardId));
-        CompletableFuture<Object> gbMessagesF   = safeAsync(() -> guestbookService.getMessages(mcardId));
+        CompletableFuture<Object> gbMessagesF   = safeAsync(() -> guestbookService.getMessages(mcardId, null, 10));
         CompletableFuture<Object> sectionOrderF = safeAsync(() -> mcardSectionOrderService.getSectionOrder(mcardId));
 
         // 전체 완료 대기
@@ -167,8 +167,8 @@ public class WeddingController {
         result.put("venueName", venue.getVenueName());
         result.put("hallName", venue.getFloorInfo());
         result.put("address", venue.getAddress());
-        result.put("lat", venue.getLatitude());
-        result.put("lng", venue.getLongitude());
+        result.put("lat", venue.getLat());
+        result.put("lng", venue.getLng());
         // PUT 저장 시 서버가 네이버 Static Map 이미지를 자동 생성하여 R2에 업로드한 URL
         // 프론트: <img src="mapImageUrl"> 로 바로 사용
         result.put("mapImageUrl", venue.getMapImageUrl());

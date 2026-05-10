@@ -20,8 +20,6 @@ public class McardVenueResponseDto {
     private String floorInfo;
     private String hallName;
     private String address;
-    private Double latitude;
-    private Double longitude;
     private Double lat;
     private Double lng;
     private String mapImageUrl;
@@ -38,10 +36,8 @@ public class McardVenueResponseDto {
             .floorInfo(entity.getFloorInfo())
             .hallName(entity.getFloorInfo())
             .address(entity.getAddress())
-            .latitude(entity.getLatitude())
-            .longitude(entity.getLongitude())
-            .lat(entity.getLatitude())
-            .lng(entity.getLongitude())
+            .lat(entity.getLat())
+            .lng(entity.getLng())
             .mapImageUrl(entity.getMapImageUrl())
             .showMap(entity.getShowMap())
             .mapLocked(entity.getMapLocked())

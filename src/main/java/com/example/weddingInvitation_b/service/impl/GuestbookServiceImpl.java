@@ -5,6 +5,7 @@ import com.example.weddingInvitation_b.domain.GuestbookSetting;
 import com.example.weddingInvitation_b.domain.Mcard;
 import com.example.weddingInvitation_b.dto.request.GuestbookMessageRequestDto;
 import com.example.weddingInvitation_b.dto.request.GuestbookSettingRequestDto;
+import com.example.weddingInvitation_b.dto.response.CursorPageResponseDto;
 import com.example.weddingInvitation_b.dto.response.GuestbookMessageResponseDto;
 import com.example.weddingInvitation_b.dto.response.GuestbookSettingResponseDto;
 import com.example.weddingInvitation_b.exception.EntityNotFoundException;
@@ -13,6 +14,7 @@ import com.example.weddingInvitation_b.repository.GuestbookSettingRepository;
 import com.example.weddingInvitation_b.repository.McardRepository;
 import com.example.weddingInvitation_b.service.GuestbookService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,10 +59,37 @@ public class GuestbookServiceImpl implements GuestbookService {
         return GuestbookSettingResponseDto.from(guestbookSettingRepository.save(setting));
     }
 
+    /**
+     * 방명록 메시지 커서 페이징 조회
+     *
+     * <p>ID 내림차순(최신순)으로 조회한다.
+     * size+1 건을 fetch하여 다음 페이지 존재 여부를 판단하고, 실제 반환은 size 건으로 자른다.</p>
+     *
+     * @param mcardId 청첩장 ID
+     * @param cursor  직전 페이지 마지막 messageId (null이면 첫 페이지)
+     * @param size    페이지 크기
+     */
     @Override
-    public List<GuestbookMessageResponseDto> getMessages(Long mcardId) {
-        return guestbookMessageRepository.findByMcardMcardIdAndIsDeletedFalseOrderByCreatedAtDesc(mcardId)
-            .stream().map(GuestbookMessageResponseDto::from).collect(Collectors.toList());
+    public CursorPageResponseDto<GuestbookMessageResponseDto> getMessages(Long mcardId, Long cursor, int size) {
+        List<GuestbookMessage> fetched = cursor == null
+            ? guestbookMessageRepository.findByMcardMcardIdAndIsDeletedFalseOrderByMessageIdDesc(mcardId, PageRequest.of(0, size + 1))
+            : guestbookMessageRepository.findByMcardMcardIdAndIsDeletedFalseAndMessageIdLessThanOrderByMessageIdDesc(mcardId, cursor, PageRequest.of(0, size + 1));
+
+        boolean hasNext = fetched.size() > size;
+        List<GuestbookMessage> page = hasNext ? fetched.subList(0, size) : fetched;
+
+        Long nextCursor = hasNext ? page.get(page.size() - 1).getMessageId() : null;
+
+        List<GuestbookMessageResponseDto> content = page.stream()
+            .map(GuestbookMessageResponseDto::from)
+            .collect(Collectors.toList());
+
+        return CursorPageResponseDto.<GuestbookMessageResponseDto>builder()
+            .content(content)
+            .nextCursor(nextCursor)
+            .hasNext(hasNext)
+            .size(content.size())
+            .build();
     }
 
     /**

@@ -6,6 +6,7 @@ import com.example.weddingInvitation_b.dto.response.AddressSearchResultDto;
 import com.example.weddingInvitation_b.dto.response.KakaoAddressResponseDto;
 import com.example.weddingInvitation_b.service.AddressService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
  * @see KakaoLocalClient
  * @see NaverMapClient
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AddressServiceImpl implements AddressService {
@@ -28,22 +30,21 @@ public class AddressServiceImpl implements AddressService {
     /**
      * 주소 키워드 검색
      *
-     * <p>카카오 로컬 API를 호출하여 키워드에 매칭되는 주소 목록을 반환한다.
-     * 원시 카카오 응답을 {@link AddressSearchResultDto}로 변환하여 반환한다.</p>
+     * <p>카카오 로컬 API를 호출하여 키워드에 매칭되는 주소 목록을 반환한다.</p>
      *
-     * @param query 검색 키워드 (예: "강남구 테헤란로")
-     * @return 프론트엔드용 주소 목록 DTO (최대 10건)
+     * @param query 검색 키워드
+     * @param page  페이지 번호 (1부터 시작)
+     * @param size  페이지당 결과 수
+     * @return 프론트엔드용 주소 목록 DTO
      */
     @Override
-    public AddressSearchResultDto searchAddress(String query) {
-        KakaoAddressResponseDto kakaoResponse = kakaoLocalClient.searchAddress(query);
-        return AddressSearchResultDto.from(kakaoResponse);
+    public AddressSearchResultDto searchAddress(String query, int page, int size) {
+        KakaoAddressResponseDto kakaoResponse = kakaoLocalClient.searchAddress(query, page, size);
+        return AddressSearchResultDto.from(kakaoResponse, page, size);
     }
 
     /**
      * 위경도 좌표 기반 지도 이미지 조회
-     *
-     * <p>네이버 Static Map API를 호출하여 해당 좌표의 지도 이미지를 PNG로 반환한다.</p>
      *
      * @param lat    위도
      * @param lng    경도

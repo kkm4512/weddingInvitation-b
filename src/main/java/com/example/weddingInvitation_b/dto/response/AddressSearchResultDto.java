@@ -22,6 +22,19 @@ public class AddressSearchResultDto {
     /** 검색된 주소 목록 */
     private List<AddressItem> addresses;
 
+    /** 현재 페이지 번호 (카카오 기준 1부터 시작) */
+    private int page;
+
+    /** 페이지당 결과 수 */
+    private int size;
+
+    /**
+     * 마지막 페이지 여부 (카카오 meta.is_end 값)
+     *
+     * <p>true이면 더 이상 가져올 결과가 없음을 의미한다.</p>
+     */
+    private boolean isEnd;
+
     /**
      * 장소/주소 단건 결과
      */
@@ -42,10 +55,10 @@ public class AddressSearchResultDto {
         private String jibunAddress;
 
         /** 위도 */
-        private Double latitude;
+        private Double lat;
 
         /** 경도 */
-        private Double longitude;
+        private Double lng;
     }
 
     /**
@@ -55,12 +68,17 @@ public class AddressSearchResultDto {
      * 장소명·도로명·지번 주소를 각각 분리하여 반환한다.</p>
      *
      * @param kakaoResponse 카카오 키워드 검색 API 원시 응답
+     * @param page          요청한 페이지 번호
+     * @param size          요청한 페이지 크기
      * @return 프론트엔드용 주소 목록 DTO
      */
-    public static AddressSearchResultDto from(KakaoAddressResponseDto kakaoResponse) {
+    public static AddressSearchResultDto from(KakaoAddressResponseDto kakaoResponse, int page, int size) {
         if (kakaoResponse == null || kakaoResponse.getDocuments() == null) {
             return AddressSearchResultDto.builder()
                 .addresses(Collections.emptyList())
+                .page(page)
+                .size(size)
+                .isEnd(true)
                 .build();
         }
 
@@ -80,14 +98,21 @@ public class AddressSearchResultDto {
                     .addressName(representative)
                     .roadAddress(doc.getRoadAddressName())
                     .jibunAddress(doc.getAddressName())
-                    .latitude(lat)
-                    .longitude(lng)
+                    .lat(lat)
+                    .lng(lng)
                     .build();
             })
             .collect(Collectors.toList());
 
+        // 카카오 meta.is_end — null이면 마지막 페이지로 간주
+        boolean end = kakaoResponse.getMeta() == null
+            || Boolean.TRUE.equals(kakaoResponse.getMeta().getIsEnd());
+
         return AddressSearchResultDto.builder()
             .addresses(items)
+            .page(page)
+            .size(size)
+            .isEnd(end)
             .build();
     }
 

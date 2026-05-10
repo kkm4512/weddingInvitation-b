@@ -84,8 +84,8 @@ public class McardVenueServiceImpl implements McardVenueService {
         McardVenue existing = mcardVenueRepository.findByMcardMcardId(mcardId)
             .orElse(McardVenue.builder().mcard(mcard).build());
 
-        Double lat = requestDto.getLatitude() != null ? requestDto.getLatitude() : existing.getLatitude();
-        Double lng = requestDto.getLongitude() != null ? requestDto.getLongitude() : existing.getLongitude();
+        Double lat = requestDto.getLat() != null ? requestDto.getLat() : existing.getLat();
+        Double lng = requestDto.getLng() != null ? requestDto.getLng() : existing.getLng();
 
         // lat/lng가 존재하면 네이버 Static Map 이미지를 자동 생성하여 R2에 저장
         // 기존 lat/lng와 동일해도 항상 재생성 (갱신 보장)
@@ -100,8 +100,8 @@ public class McardVenueServiceImpl implements McardVenueService {
             .venueName(requestDto.getVenueName() != null ? requestDto.getVenueName() : existing.getVenueName())
             .floorInfo(requestDto.getFloorInfo() != null ? requestDto.getFloorInfo() : existing.getFloorInfo())
             .address(requestDto.getAddress() != null ? requestDto.getAddress() : existing.getAddress())
-            .latitude(lat)
-            .longitude(lng)
+            .lat(lat)
+            .lng(lng)
             .mapImageUrl(mapImageUrl)
             .showMap(requestDto.getShowMap() != null ? requestDto.getShowMap() : existing.getShowMap())
             .mapLocked(requestDto.getMapLocked() != null ? requestDto.getMapLocked() : existing.getMapLocked())

@@ -34,14 +34,19 @@ public class AddressController {
      * 주소 키워드 검색
      *
      * <p>카카오 로컬 API를 통해 키워드에 매칭되는 주소 목록을 반환한다.
-     * 반환값에는 도로명 주소, 지번 주소, 위도, 경도가 포함된다.</p>
+     * 반환값에는 도로명 주소, 지번 주소, 위도, 경도, 페이지 메타(isEnd)가 포함된다.</p>
      *
      * @param query 검색할 주소 키워드 (예: "강남구 테헤란로", "역삼역")
-     * @return 주소 검색 결과 목록 (최대 10건)
+     * @param page  페이지 번호 (기본값 1, 카카오 최대 45)
+     * @param size  페이지당 결과 수 (기본값 10, 카카오 최대 15)
+     * @return 주소 검색 결과 목록
      */
     @GetMapping("/search")
-    public ApiResponse<AddressSearchResultDto> searchAddress(@RequestParam String query) {
-        return ApiResponse.success(addressService.searchAddress(query));
+    public ApiResponse<AddressSearchResultDto> searchAddress(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.success(addressService.searchAddress(query, page, size));
     }
 
     /**
